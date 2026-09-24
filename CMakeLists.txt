@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.26)
 project(calendar_engine LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Build configuration: where it runs (DEV|PI) and which GL API it uses (CORE|ES).
@@ -52,3 +54,20 @@ if(GL_API STREQUAL "CORE")
 else()
     target_link_libraries(calendar PRIVATE PkgConfig::GLES)
 endif()
+
+# Runtime data lives next to the binary: <dir>/calendar, <dir>/shaders, <dir>/assets.
+# Runs on every build (not only when calendar relinks) so shader edits are picked up;
+# copy_directory_if_different skips files that haven't changed.
+add_custom_target(runtime_data ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:calendar>/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+            ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:calendar>/assets
+    COMMENT "Copying shaders/ and assets/ next to calendar"
+    VERBATIM
+)
+add_dependencies(calendar runtime_data)
+
+# Same layout when installed, e.g. cmake --install build/pi-es --prefix /opt/calendar
+install(TARGETS calendar RUNTIME DESTINATION .)
+install(DIRECTORY shaders assets DESTINATION .)
