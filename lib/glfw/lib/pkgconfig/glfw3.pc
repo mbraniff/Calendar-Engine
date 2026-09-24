@@ -1,7 +1,7 @@
-prefix=/usr/local
+prefix=/workspaces/calendar-engine/lib/glfw
 exec_prefix=${prefix}
-includedir=/usr/local/include
-libdir=/usr/local/lib
+includedir=/workspaces/calendar-engine/lib/glfw/include
+libdir=/workspaces/calendar-engine/lib/glfw/lib
 
 Name: GLFW
 Description: A multi-platform library for OpenGL, window and input
