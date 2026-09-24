@@ -1,30 +1,31 @@
 #include <algorithm>
 #include <cmath>
-#include <glad/glad.h>
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
+#include "GL.h"
+#include <GLFW/glfw3.h>
 #include <string>
 #include "shader.hpp"
 #include "stb_image.h"
+#include "platform/platform.h"
 
-const char *VERTEX_FILE_PATH = "./src/shaders/shader.vert";
-const char *FRAGMENT_FILE_PATH = "./src/shaders/shader.frag";
+const char *VERTEX_FILE_PATH = "./shaders/shader.vert";
+const char *FRAGMENT_FILE_PATH = "./shaders/shader.frag";
 float opacity = 0.2f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow* window) {
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-        glfwSetWindowShouldClose(window, true);
+void processInput(int key) {
+    std::cout << "Hit key: " << key << std::endl;
+    if(key == GLFW_KEY_ESCAPE) {
+        // glfwSetWindowShouldClose(window, true);
     }
-    if(glfwGetKey(window, GLFW_KEY_UP) || glfwGetKey(window, GLFW_KEY_KP_8)) {
-        opacity = std::min(opacity + 0.001f, 1.0f);
+    if(key ==  GLFW_KEY_UP || key == GLFW_KEY_KP_8) {
+        opacity = std::min(opacity + 0.1f, 1.0f);
     }
-    if(glfwGetKey(window, GLFW_KEY_DOWN) || glfwGetKey(window, GLFW_KEY_KP_2)) {
-        opacity = std::max(opacity - 0.001f, 0.0f);
+    if(key == GLFW_KEY_DOWN || key == GLFW_KEY_KP_2) {
+        opacity = std::max(opacity - 0.1f, 0.0f);
     }
 }
 
@@ -44,7 +45,7 @@ unsigned int loadTexture(const std::string &path, bool flip = false) {
     unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
     
     if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         std::cout << "Failed to load texture" << std::endl;
@@ -171,29 +172,17 @@ unsigned int generateTriangleObject() {
 }
 
 int main() {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #ifdef APP_PROFILE_DEV
+        PlatformConfig cfg{800, 600, "app", false, false};
+    #else
+        PlatformConfig cfg{1280, 800, "app", true, true};
+    #endif
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-    if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-
-
-    glViewport(0, 0, 800, 600);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    auto platform = createPlatform();
+    if (!platform->init(cfg)) return 1;
+    platform->onKey = [&](int key) {
+        processInput(key);
+    };
 
     unsigned int triangle = generateTriangleObject();
     unsigned int rectangle = generateRectangleObject();
@@ -211,8 +200,8 @@ int main() {
     unsigned int triangleTwo = generateTriangleArray(triangleTwoVertices, sizeof(triangleTwoVertices));
 
     Shader program(VERTEX_FILE_PATH, FRAGMENT_FILE_PATH);
-    unsigned int container = loadTexture("container.jpg");
-    unsigned int smile = loadTexture("awesomeface.png", true);
+    unsigned int container = loadTexture("./assets/container.jpg");
+    unsigned int smile = loadTexture("./assets/awesomeface.png", true);
 
     program.use();
     glUniform1i(glGetUniformLocation(program.ID, "texture1"), 0);
@@ -220,8 +209,7 @@ int main() {
 
     unsigned int rect2 = generateRectangleObject2();
 
-    while (!glfwWindowShouldClose(window)) {
-        processInput(window);
+    while (!platform->shouldClose()) {
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -240,10 +228,10 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        platform->swapBuffers();
+        platform->pollEvents();
     }
-    glfwTerminate();
+    platform = nullptr;
     return 0;
 }
 

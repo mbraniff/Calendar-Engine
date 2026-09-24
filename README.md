@@ -30,11 +30,13 @@ The window opens on the container's virtual desktop. To view it, open the forwar
 ## Project layout
 
 ```
-src/             application source
-lib/glfw/        prebuilt static GLFW 3.5.1, X11 + Wayland (headers, lib, CMake config)
-lib/glad/        glad OpenGL loader (source, compiled as part of the build)
-.devcontainer/   dev container definition
-CMakeLists.txt   build configuration
+src/app/           application source
+shaders/           GLSL shaders
+assets/            textures and other runtime data
+lib/glfw/          prebuilt static GLFW 3.5.1, X11 + Wayland (headers, lib, CMake config)
+third_party/glad/  glad OpenGL loader (source, compiled as part of the build)
+.devcontainer/     dev container definition
+CMakeLists.txt     build configuration
 ```
 
 `build/` is generated and git-ignored. clangd reads `build/compile_commands.json` for autocomplete, so re-run the CMake configure step if autocomplete stops finding headers.
@@ -76,14 +78,14 @@ The exported `glfw` target brings its own link dependencies (`Threads::Threads`,
 
 ### glad 0.1.36
 
-`lib/glad/` was generated at https://glad.dav1d.de with:
+`third_party/glad/` was generated at https://glad.dav1d.de with:
 
 - Language: C/C++
 - Specification: gl, API gl 3.3
 - Profile: core
 - Generate a loader: on
 
-To regenerate it (for example for a newer GL version), download the new files and replace `lib/glad/include` and `lib/glad/src/glad.c`.
+To regenerate it (for example for a newer GL version), download the new files and replace `third_party/glad/include` and `third_party/glad/src/glad.c`.
 
 In code, include glad **before** GLFW, and load it after making the context current:
 

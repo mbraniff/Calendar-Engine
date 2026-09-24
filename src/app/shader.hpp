@@ -1,12 +1,20 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <glad/glad.h>
+#include "GL.h"
 
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+
+#ifdef APP_GL_ES
+const std::string shaderHeader = "#version 300 es\n";
+const std::string fragmentHeader = shaderHeader + "precision highp float;\n";
+#else
+const std::string shaderHeader = "#version 330 core\n";
+const std::string fragmentHeader = shaderHeader;
+#endif
 
 class Shader {
 public:
@@ -29,8 +37,8 @@ public:
             vShaderFile.close();
             fShaderFile.close();
 
-            vertexCode = vShaderStream.str();
-            fragmentCode = fShaderStream.str();
+            vertexCode = shaderHeader + vShaderStream.str();
+            fragmentCode = fragmentHeader + fShaderStream.str();
         } catch (std::ifstream::failure e) {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ" << std::endl;
         }
