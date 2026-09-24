@@ -1,0 +1,19 @@
+{
+  "name": "calendar-engine",
+  "build": { "dockerfile": "Dockerfile" },
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  "forwardPorts": [6080],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools"
+      ],
+      "settings": {
+        "clangd.arguments": ["--compile-commands-dir=${workspaceFolder}/build"]
+      }
+    }
+  }
+}
