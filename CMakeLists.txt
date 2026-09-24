@@ -10,5 +10,6 @@ find_package(glfw3 3.5 REQUIRED)
 add_library(glad STATIC lib/glad/src/glad.c)
 target_include_directories(glad PUBLIC lib/glad/include)
 
-add_executable(calendar src/main.cpp)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
+add_executable(calendar ${SOURCES})
 target_link_libraries(calendar PRIVATE glfw glad)
