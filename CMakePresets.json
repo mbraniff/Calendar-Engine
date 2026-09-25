@@ -1,0 +1,48 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 26, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}"
+    },
+    {
+      "name": "dev-core",
+      "displayName": "Dev: OpenGL 3.3 core, windowed",
+      "inherits": "base",
+      "cacheVariables": {
+        "TARGET_PROFILE": "DEV",
+        "GL_API": "CORE",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "dev-es",
+      "displayName": "Dev: OpenGL ES 3.1, windowed",
+      "inherits": "base",
+      "cacheVariables": {
+        "TARGET_PROFILE": "DEV",
+        "GL_API": "ES",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "pi-es",
+      "displayName": "Pi 4: OpenGL ES 3.1, fullscreen kiosk",
+      "inherits": "base",
+      "cacheVariables": {
+        "TARGET_PROFILE": "PI",
+        "GL_API": "ES",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev-core", "configurePreset": "dev-core" },
+    { "name": "dev-es", "configurePreset": "dev-es" },
+    { "name": "pi-es", "configurePreset": "pi-es" }
+  ]
+}
