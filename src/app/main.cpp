@@ -8,9 +8,16 @@
 #include "stb_image.h"
 #include "platform/platform.h"
 
-const char *VERTEX_FILE_PATH = "./shaders/shader.vert";
-const char *FRAGMENT_FILE_PATH = "./shaders/shader.frag";
 float opacity = 0.2f;
+
+std::filesystem::path exePath;
+std::string fetchAsset(const std::string &name) {
+    return exePath / "assets" / name;
+}
+
+std::string fetchShader(const std::string &name) {
+    return exePath / "shaders" / name ;
+}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -172,6 +179,7 @@ unsigned int generateTriangleObject() {
 }
 
 int main() {
+    exePath = exeDir();
     #ifdef APP_PROFILE_DEV
         PlatformConfig cfg{800, 600, "app", false, false};
     #else
@@ -199,9 +207,9 @@ int main() {
     unsigned int triangleOne = generateTriangleArray(triangleOneVertices, sizeof(triangleOneVertices));
     unsigned int triangleTwo = generateTriangleArray(triangleTwoVertices, sizeof(triangleTwoVertices));
 
-    Shader program(VERTEX_FILE_PATH, FRAGMENT_FILE_PATH);
-    unsigned int container = loadTexture("./assets/container.jpg");
-    unsigned int smile = loadTexture("./assets/awesomeface.png", true);
+    Shader program(fetchShader("shader.vert").c_str(), fetchShader("shader.frag").c_str());
+    unsigned int container = loadTexture(fetchAsset("container.jpg"));
+    unsigned int smile = loadTexture(fetchAsset("awesomeface.png"), true);
 
     program.use();
     glUniform1i(glGetUniformLocation(program.ID, "texture1"), 0);

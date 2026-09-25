@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <filesystem>
 
 struct PlatformConfig {
     int width, height;
@@ -24,3 +25,4 @@ public:
 };
 
 std::unique_ptr<Platform> createPlatform();
+std::filesystem::path exeDir();

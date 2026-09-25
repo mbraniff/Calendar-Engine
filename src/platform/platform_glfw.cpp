@@ -1,4 +1,5 @@
 #include "app/GL.h"
+#include <filesystem>
 #include <memory>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -90,4 +91,8 @@ namespace {
 
 std::unique_ptr<Platform> createPlatform() {
     return std::make_unique<PlatformGlfw>();
+}
+
+std::filesystem::path exeDir() {
+    return std::filesystem::read_symlink("/proc/self/exe").parent_path();
 }
