@@ -55,6 +55,13 @@ else()
     target_link_libraries(calendar PRIVATE PkgConfig::GLES)
 endif()
 
+# The Pi reads its touchscreen directly with libinput; GLFW has no touch API.
+if(TARGET_PROFILE STREQUAL "PI")
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(LIBINPUT REQUIRED IMPORTED_TARGET libinput)
+    target_link_libraries(calendar PRIVATE PkgConfig::LIBINPUT)
+endif()
+
 # Runtime data lives next to the binary: <dir>/calendar, <dir>/shaders, <dir>/assets.
 # Runs on every build (not only when calendar relinks) so shader edits are picked up;
 # copy_directory_if_different skips files that haven't changed.

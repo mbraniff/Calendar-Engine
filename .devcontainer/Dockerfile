@@ -6,4 +6,5 @@ FROM debian:trixie
       libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev \
       libwayland-dev libwayland-bin libxkbcommon-dev \
       libgl1-mesa-dev libegl-dev libgles-dev \
+      libinput-dev \
    && rm -rf /var/lib/apt/lists/*
