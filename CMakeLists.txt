@@ -26,8 +26,10 @@ if(TARGET_PROFILE STREQUAL "PI" AND GL_API STREQUAL "CORE")
 endif()
 message(STATUS "Configuration: TARGET_PROFILE=${TARGET_PROFILE} GL_API=${GL_API}")
 
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/glfw")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/glfw" "${CMAKE_SOURCE_DIR}/lib/freetype")
 find_package(glfw3 3.4 REQUIRED)
+# CONFIG picks lib/freetype's own package over CMake's FindFreetype module (system FreeType).
+find_package(freetype 2.14 CONFIG REQUIRED)
 
 if(GL_API STREQUAL "CORE")
     add_library(glad STATIC third_party/glad/src/glad.c)
@@ -53,7 +55,7 @@ target_compile_definitions(calendar PRIVATE
     APP_PROFILE_${TARGET_PROFILE}
     APP_GL_${GL_API}
 )
-target_link_libraries(calendar PRIVATE glfw glm::glm)
+target_link_libraries(calendar PRIVATE glfw glm::glm Freetype::Freetype)
 
 if(GL_API STREQUAL "CORE")
     target_link_libraries(calendar PRIVATE glad)

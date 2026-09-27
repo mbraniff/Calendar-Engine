@@ -51,6 +51,7 @@ src/platform/      windowing and GL context setup (GLFW)
 shaders/           GLSL shaders
 assets/            textures and other runtime data
 lib/glfw/          prebuilt static GLFW 3.5.1, X11 + Wayland (headers, lib, CMake config)
+lib/freetype/      prebuilt static FreeType 2.14.3 (headers, lib, CMake config)
 third_party/glad/  glad OpenGL loader (source, compiled as part of the build)
 .devcontainer/     dev container definition
 CMakeLists.txt     build configuration
@@ -97,6 +98,33 @@ ln -sfn dev-core/compile_commands.json build/compile_commands.json
    If `wl_*` or `x11_*` files are missing, the dev packages are missing: rebuild the container and delete `glfw-3.5.1/build` before configuring again.
 
 The exported `glfw` target brings its own link dependencies (`Threads::Threads`, `rt`, `m`, `dl`), so `target_link_libraries(... glfw)` is enough. GLFW loads X11, Wayland, EGL and GL at runtime with `dlopen`, so none of them are linked. On the Pi kiosk (Wayland), these must be installed at runtime: `libwayland-client0`, `libwayland-cursor0`, `libwayland-egl1`, `libxkbcommon0` and `libEGL`/`libGLESv2`. The X11 libraries are only needed in the dev container.
+
+### FreeType 2.14.3
+
+`lib/freetype/` holds a static Release build of FreeType with **all optional dependencies turned off** (zlib, bzip2, libpng, HarfBuzz, Brotli), so it needs nothing else at link or run time. FreeType still reads gzip-compressed fonts using its own bundled zlib. As with GLFW, it was compiled **inside the dev container for Linux arm64**. To rebuild it, or to change versions:
+
+1. Download the FreeType source from https://freetype.org/download.html and extract it into the project root (`freetype-2.14.3/` is git-ignored).
+2. Inside the dev container:
+
+   ```sh
+   rm -rf freetype-2.14.3/build lib/freetype
+   cmake -S freetype-2.14.3 -B freetype-2.14.3/build -G Ninja \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DBUILD_SHARED_LIBS=OFF \
+     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+     -DFT_DISABLE_ZLIB=TRUE -DFT_DISABLE_BZIP2=TRUE -DFT_DISABLE_PNG=TRUE \
+     -DFT_DISABLE_HARFBUZZ=TRUE -DFT_DISABLE_BROTLI=TRUE \
+     -DCMAKE_INSTALL_PREFIX="$PWD/lib/freetype"
+   cmake --build freetype-2.14.3/build -j"$(nproc)"
+   cmake --install freetype-2.14.3/build
+   ```
+
+`CMakeLists.txt` finds it with `find_package(freetype CONFIG)`. `CONFIG` matters: without it, CMake's `FindFreetype` module could pick up a system FreeType instead. Link `Freetype::Freetype`, and include it the FreeType way:
+
+```cpp
+#include <ft2build.h>
+#include FT_FREETYPE_H
+```
 
 ### glad 0.1.36
 
