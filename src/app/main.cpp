@@ -7,8 +7,14 @@
 #include "shader.hpp"
 #include "stb_image.h"
 #include "platform/platform.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 float opacity = 0.2f;
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 std::filesystem::path exePath;
 std::string fetchAsset(const std::string &name) {
@@ -23,17 +29,30 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void processInput(int key) {
-    std::cout << "Hit key: " << key << std::endl;
-    if(key == GLFW_KEY_ESCAPE) {
-        // glfwSetWindowShouldClose(window, true);
+void setView(unsigned int program) {
+    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    int viewLoc = glGetUniformLocation(program, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+}
+
+void processInput(Platform* platform, unsigned int program, float deltaTime) {
+    float cameraSpeed = 2.5f * deltaTime;
+    if(platform->isKeyDown(GLFW_KEY_ESCAPE)) {
+        platform->requestClose();
     }
-    if(key ==  GLFW_KEY_UP || key == GLFW_KEY_KP_8) {
-        opacity = std::min(opacity + 0.1f, 1.0f);
+    if(platform->isKeyDown(GLFW_KEY_W)) {
+        cameraPos += cameraSpeed * cameraFront;
     }
-    if(key == GLFW_KEY_DOWN || key == GLFW_KEY_KP_2) {
-        opacity = std::max(opacity - 0.1f, 0.0f);
+    if(platform->isKeyDown(GLFW_KEY_S)) {
+        cameraPos -= cameraSpeed * cameraFront;
     }
+    if(platform->isKeyDown(GLFW_KEY_A)) {
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if(platform->isKeyDown(GLFW_KEY_D)) {
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    setView(program);
 }
 
 unsigned int loadTexture(const std::string &path, bool flip = false) {
@@ -82,6 +101,77 @@ unsigned int generateRectangleObject2() {
         0, 1, 3,
         1, 2, 3
     };
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    return VAO;
+}
+
+unsigned int generateCube() {
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    unsigned int VAO;
+    glGenVertexArrays(1, &VAO);
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+
+    float vertices[] = {
+        // position              // color          // uv
+        // Front (z = +0.5)
+        -0.5f, -0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        // Back (z = -0.5)
+        0.5f, -0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        // Right (x = +0.5)
+        0.5f, -0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        // Left (x = -0.5)
+        -0.5f, -0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        // Top (y = +0.5)
+        -0.5f,  0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        // Bottom (y = -0.5)
+        -0.5f, -0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,     0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+    };
+
+    unsigned int indices[36];
+    for (unsigned int face = 0; face < 6; ++face) {
+        unsigned int b = face * 4;
+        unsigned int quad[] = { b, b + 1, b + 2,   b + 2, b + 3, b };
+        std::copy(std::begin(quad), std::end(quad), indices + face * 6);
+    }
 
     glBindVertexArray(VAO);
 
@@ -188,9 +278,6 @@ int main() {
 
     auto platform = createPlatform();
     if (!platform->init(cfg)) return 1;
-    platform->onKey = [&](int key) {
-        processInput(key);
-    };
 
     unsigned int triangle = generateTriangleObject();
     unsigned int rectangle = generateRectangleObject();
@@ -215,15 +302,61 @@ int main() {
     glUniform1i(glGetUniformLocation(program.ID, "texture1"), 0);
     program.setInt("texture2", 1);
 
+    // platform->onKey = [&, program](int key) {
+    //     processInput(key, program.ID);
+    // };
+
     unsigned int rect2 = generateRectangleObject2();
+    glm::mat4 model = glm::mat4(1.0f);
+    // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 projection;
 
+    int w, h;
+    platform->framebufferSize(w, h);
+    projection = glm::perspective(glm::radians(45.0f), (float)(w/h), 0.1f, 100.0f);
+
+    int modelLoc = glGetUniformLocation(program.ID, "model");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    setView(program.ID);
+    int projLoc = glGetUniformLocation(program.ID, "projection");
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+    unsigned int cube = generateCube();
+    glEnable(GL_DEPTH_TEST);
+
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f, 2.0f, -2.5f),
+        glm::vec3(1.5f, 0.2f, -1.5f),
+        glm::vec3(-1.3f, 1.0f, -1.5f)
+    };
+
+    glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+    glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+    float lastFrame = 0.0f;
+    float deltaTime = 0.0f;
     while (!platform->shouldClose()) {
-
+        float currentFrame = platform->time();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        processInput(platform.get(), program.ID, deltaTime);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program.use();
         program.setFloat("opacity", opacity);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, container);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -231,9 +364,17 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, smile);
 
-        glBindVertexArray(rectangle);
+        glBindVertexArray(cube);
+        for(unsigned int i = 0; i < 10; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            program.setMat4("model", model);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        }
         // glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
         glBindVertexArray(0);
 
         platform->swapBuffers();

@@ -53,7 +53,7 @@ namespace {
             glfwMakeContextCurrent(win_);
             #ifdef APP_GL_CORE
                 if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-                    std:fprintf(stderr, "Failed to load GL functions\n");
+                    std::fprintf(stderr, "Failed to load GL functions\n");
                     return false;
                 }
             #endif
@@ -83,6 +83,8 @@ namespace {
         void framebufferSize(int &w, int &h) const override {
             glfwGetFramebufferSize(win_, &w, &h);
         }
+        bool isKeyDown(int key) override { return glfwGetKey(win_, key) == GLFW_PRESS; }
+        void requestClose() override { glfwSetWindowShouldClose(win_, GLFW_TRUE); }
 
     private:
         GLFWwindow* win_ = nullptr;

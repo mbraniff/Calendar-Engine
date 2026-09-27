@@ -37,6 +37,12 @@ else()
     pkg_check_modules(GLES REQUIRED IMPORTED_TARGET glesv2 egl)
 endif()
 
+# GLM is header-only: an INTERFACE target carries its include path to whoever links it.
+# SYSTEM keeps GLM's own warnings out of our build output.
+add_library(glm INTERFACE)
+target_include_directories(glm SYSTEM INTERFACE third_party/glm)
+add_library(glm::glm ALIAS glm)
+
 add_executable(calendar
     src/app/main.cpp
     src/app/stb_image.cpp
@@ -47,7 +53,7 @@ target_compile_definitions(calendar PRIVATE
     APP_PROFILE_${TARGET_PROFILE}
     APP_GL_${GL_API}
 )
-target_link_libraries(calendar PRIVATE glfw)
+target_link_libraries(calendar PRIVATE glfw glm::glm)
 
 if(GL_API STREQUAL "CORE")
     target_link_libraries(calendar PRIVATE glad)

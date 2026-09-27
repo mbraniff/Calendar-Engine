@@ -19,6 +19,8 @@ public:
     virtual void swapBuffers() = 0;
     virtual void framebufferSize(int &w, int &h) const = 0;
     virtual double time() const = 0;
+    virtual bool isKeyDown(int key) = 0;
+    virtual void requestClose() = 0;
 
     std::function<void(float x, float y, bool down)> onPointer;
     std::function<void(int key)> onKey;
