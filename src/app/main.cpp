@@ -421,6 +421,13 @@ int main() {
         renderer.setFrameBuffer(wi, he);
         w = wi; h = he;
     };
+    text.alignment = Alignment::topLeading();
+    text.color = Color::white();
+    auto subText = std::make_unique<Text>("This is some text under the original text");
+    subText->alignment = Alignment::bottomCenter();
+    subText->offset.y = 16.0f;
+    subText->color = Color::blue();
+    text.addSubview(std::move(subText));
 
     float lastFrame = 0.0f;
     float deltaTime = 0.0f;
@@ -462,6 +469,16 @@ int main() {
         // glDisable(GL_BLEND);
         text.layout(Rect{{0, 0}, (float)w, (float)h});
         text.render(renderer);
+        float speed = 100.0f;
+        text.offset.x += speed * deltaTime;
+        auto size = text.size();
+        if (text.offset.x >= w - size.width) {
+            text.offset.x = 0;
+            text.offset.y += speed * deltaTime * 10;
+        }
+        if (text.offset.y >= h - size.height) {
+            text.offset.y = 0;
+        }
 
         platform->swapBuffers();
         platform->pollEvents();
