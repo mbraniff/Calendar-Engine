@@ -416,6 +416,11 @@ int main() {
     Renderer renderer;
     Text text("Howdy yall this is some text that will render bad");
     renderer.setFrameBuffer(w, h);
+    platform->onFramebufferResize = [&renderer, &w, &h](int wi, int he) {
+        glViewport(0, 0, wi, he);
+        renderer.setFrameBuffer(wi, he);
+        w = wi; h = he;
+    };
 
     float lastFrame = 0.0f;
     float deltaTime = 0.0f;

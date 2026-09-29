@@ -73,6 +73,10 @@ namespace {
                 auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
                 if (act == GLFW_PRESS && self->onKey) self->onKey(key);
             });
+            glfwSetFramebufferSizeCallback(win_, [](GLFWwindow* window, int w, int h) {
+                auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(window));
+                if (self->onFramebufferResize) self->onFramebufferResize(w, h);
+            });
             return true;
         }
 

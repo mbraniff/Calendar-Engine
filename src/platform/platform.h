@@ -24,6 +24,7 @@ public:
 
     std::function<void(float x, float y, bool down)> onPointer;
     std::function<void(int key)> onKey;
+    std::function<void(int w, int h)> onFramebufferResize;
 };
 
 std::unique_ptr<Platform> createPlatform();
