@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include "GL.h"
 #include <GLFW/glfw3.h>
@@ -389,7 +390,7 @@ int main() {
 
     int w, h;
     platform->framebufferSize(w, h);
-    projection = glm::perspective(glm::radians(45.0f), (float)(w/h), 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)w/(float)h, 0.1f, 100.0f);
 
     int modelLoc = glGetUniformLocation(program.ID, "model");
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -398,7 +399,6 @@ int main() {
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     unsigned int cube = generateCube();
-    glEnable(GL_DEPTH_TEST);
 
     glm::vec3 cubePositions[] = {
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -442,6 +442,7 @@ int main() {
         program.use();
         program.setFloat("opacity", opacity);
 
+        glEnable(GL_DEPTH_TEST);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, container);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -450,23 +451,18 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, smile);
 
         glBindVertexArray(cube);
-        // for(unsigned int i = 0; i < 10; i++) {
-        //     glm::mat4 model = glm::mat4(1.0f);
-        //     model = glm::translate(model, cubePositions[i]);
-        //     float angle = 20.0f * i;
-        //     model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-        //     program.setMat4("model", model);
-        //     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        // }
-        // glDrawArrays(GL_TRIANGLES, 0, 3);
+        for(unsigned int i = 0; i < 10; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            program.setMat4("model", model);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        }
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glBindVertexArray(0);
 
-        // glEnable(GL_BLEND);
-        // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // glyphProgram.use();
-        // drawText(glyphs, textVAO, textVBO);
-        // glDisable(GL_BLEND);
         text.layout(Rect{{0, 0}, (float)w, (float)h});
         text.render(renderer);
         float speed = 100.0f;
