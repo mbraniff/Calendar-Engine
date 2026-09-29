@@ -1,4 +1,4 @@
-#include "paths.h"
+#include "app/paths.hpp"
 #include "platform/platform.h"
 
 namespace paths {
