@@ -4,6 +4,7 @@
 #include "GL.h"
 
 #include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/vector_float4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
 #include <fstream>
@@ -83,6 +84,10 @@ public:
         glDeleteShader(fragmentShader);
     }
 
+    ~Shader() {
+        glDeleteProgram(ID);
+    }
+
     void use() {
         glUseProgram(ID);
     }
@@ -98,6 +103,9 @@ public:
     }
     void setMat4(const std::string &name, glm::mat4 &value) const {
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    }
+    void set4Float(const std::string &name, glm::vec4 &value) const {
+        glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
     }
 };
 

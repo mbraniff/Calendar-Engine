@@ -1,9 +1,12 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include "GL.h"
 #include <GLFW/glfw3.h>
 #include <string>
+#include "app/renderer.hpp"
+#include "app/text.hpp"
 #include "shader.hpp"
 #include "stb_image.h"
 #include "platform/platform.h"
@@ -11,6 +14,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "app/paths.hpp"
+#include <freetype/freetype.h>
+#include <map>
+#include <set>
+#include <string_view>
+#include <unistd.h>
+#include <vector>
+
+static std::set<char> whitespace = { '\n', ' ', '\t', '\r' };
 
 float opacity = 0.2f;
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -260,6 +271,80 @@ unsigned int generateTriangleObject() {
     return generateTriangleArray(vertices, sizeof(vertices));
 }
 
+struct GlyphVertex { glm::vec2 pos; glm::vec2 uv; };
+using GlyphQuad = std::array<GlyphVertex, 6>;
+GlyphQuad buildQuad(glm::vec2 p, glm::vec2 s) {
+    return {{
+        {{p.x,       p.y + s.y}, {0, 0}},
+          {{p.x,       p.y      }, {0, 1}},
+          {{p.x + s.x, p.y      }, {1, 1}},
+          {{p.x,       p.y + s.y}, {0, 0}},
+          {{p.x + s.x, p.y      }, {1, 1}},
+          {{p.x + s.x, p.y + s.y}, {1, 0}},
+    }};
+}
+
+struct PlacedGlyph {
+    unsigned int texture;
+    GlyphQuad quad;
+};
+
+// std::vector<PlacedGlyph> layoutText(std::string_view text, glm::vec2 origin, float maxWidth, float lineHeight) {
+//     std::vector<PlacedGlyph> out;
+//     float x = origin.x, y = origin.y;
+//     size_t lineStart = 0;
+//     size_t wordStart = 0;
+//     float wordStartX = x;
+
+//     for (char c : text) {
+//         if (c == '\n') {
+//             x = origin.x; y -= lineHeight;
+//             lineStart = wordStart = out.size();
+//             wordStartX = x;
+//             continue;
+//         }
+//         const Character &ch = Characters[c];
+//         float advance = ch.Advance >> 6;
+
+//         if (c == ' ') {
+//             x += advance;
+//             wordStart = out.size();
+//             wordStartX = x;
+//             continue;
+//         }
+
+//         if (x + advance - origin.x > maxWidth && wordStart > lineStart) {
+//             float shift = wordStartX - origin.x;
+//             for (size_t i = wordStart; i < out.size(); ++i) {
+//                 for (auto& v : out[i].quad) { v.pos.x -= shift; v.pos.y -= lineHeight; }
+//             }
+//             x -= shift; y -= lineHeight;
+//             lineStart = wordStart;
+//             wordStartX = origin.x;
+//         }
+
+//         glm::vec2 pos{std::round(x + ch.Bearing.x), std::round(y - (ch.Size.y - ch.Bearing.y))};
+//         out.push_back({ch.TextureID, buildQuad(pos, ch.Size)});
+//         x += advance;
+//     }
+//     return out;
+// }
+
+// void drawText(const std::vector<PlacedGlyph> glyphs, unsigned int VAO, unsigned int VBO) {
+//     std::vector<GlyphVertex> verts;
+//     verts.reserve(glyphs.size() * 6);
+//     for (auto& g : glyphs) verts.insert(verts.end(), g.quad.begin(), g.quad.end());
+
+//     glBindVertexArray(VAO);
+//     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//     glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(GlyphVertex), verts.data(), GL_DYNAMIC_DRAW);
+//     for (size_t i = 0; i < glyphs.size(); ++i) {
+//         glBindTexture(GL_TEXTURE_2D, glyphs[i].texture);
+//         glDrawArrays(GL_TRIANGLES, i*6, 6);
+//     }
+//     glBindVertexArray(0);
+// }
+
 int main() {
     #ifdef APP_PROFILE_DEV
         PlatformConfig cfg{800, 600, "app", false, false};
@@ -328,12 +413,9 @@ int main() {
         glm::vec3(-1.3f, 1.0f, -1.5f)
     };
 
-    glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-    glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+    Renderer renderer;
+    Text text("Howdy yall this is some text that will render bad");
+    renderer.setFrameBuffer(w, h);
 
     float lastFrame = 0.0f;
     float deltaTime = 0.0f;
@@ -356,17 +438,25 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, smile);
 
         glBindVertexArray(cube);
-        for(unsigned int i = 0; i < 10; i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            program.setMat4("model", model);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        }
+        // for(unsigned int i = 0; i < 10; i++) {
+        //     glm::mat4 model = glm::mat4(1.0f);
+        //     model = glm::translate(model, cubePositions[i]);
+        //     float angle = 20.0f * i;
+        //     model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        //     program.setMat4("model", model);
+        //     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        // }
         // glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glBindVertexArray(0);
+
+        // glEnable(GL_BLEND);
+        // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glyphProgram.use();
+        // drawText(glyphs, textVAO, textVBO);
+        // glDisable(GL_BLEND);
+        text.layout(Rect{{0, 0}, (float)w, (float)h});
+        text.render(renderer);
 
         platform->swapBuffers();
         platform->pollEvents();
