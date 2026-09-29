@@ -1,6 +1,6 @@
 #pragma once
-#include "app/text_renderer.hpp"
-#include "app/font.hpp"
+#include "app/rendering/text_renderer.hpp"
+#include "app/text/font.hpp"
 #include <glm/fwd.hpp>
 #include <stack>
 #include <string_view>

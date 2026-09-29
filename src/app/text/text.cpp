@@ -1,4 +1,4 @@
-#include "text.hpp"
+#include "app/text/text.hpp"
 #include <string>
 
 Text::Text(std::string text) {

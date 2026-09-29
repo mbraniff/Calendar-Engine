@@ -49,9 +49,9 @@ add_executable(calendar
     src/app/main.cpp
     src/app/stb_image.cpp
     src/platform/platform_glfw.cpp
-    src/app/font.cpp
+    src/app/text/font.cpp
     src/app/paths.cpp
-    src/app/text.cpp
+    src/app/text/text.cpp
 )
 target_include_directories(calendar PRIVATE src)
 target_compile_definitions(calendar PRIVATE

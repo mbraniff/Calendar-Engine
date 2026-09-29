@@ -5,8 +5,8 @@
 #include "GL.h"
 #include <GLFW/glfw3.h>
 #include <string>
-#include "app/renderer.hpp"
-#include "app/text.hpp"
+#include "app/rendering/renderer.hpp"
+#include "app/text/text.hpp"
 #include "shader.hpp"
 #include "stb_image.h"
 #include "platform/platform.h"

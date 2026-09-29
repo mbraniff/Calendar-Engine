@@ -1,6 +1,6 @@
 #pragma once
-#include "app/font.hpp"
-#include "app/view.hpp"
+#include "app/text/font.hpp"
+#include "app/view/view.hpp"
 #include <string>
 
 class Text: public View {

@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include "app/graphics.hpp"
-#include "renderer.hpp"
+#include "app/rendering/renderer.hpp"
 
 class View {
 public:

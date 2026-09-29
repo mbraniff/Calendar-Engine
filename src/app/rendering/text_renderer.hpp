@@ -1,8 +1,8 @@
 #pragma once
-#include "app/font.hpp"
+#include "app/text/font.hpp"
 #include "app/shader.hpp"
-#include "GL.h"
-#include "paths.hpp"
+#include "app/GL.h"
+#include "app/paths.hpp"
 #include "app/graphics.hpp"
 #include <string_view>
 
