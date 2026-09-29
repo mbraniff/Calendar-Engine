@@ -10,20 +10,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "app/paths.hpp"
 
 float opacity = 0.2f;
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-std::filesystem::path exePath;
-std::string fetchAsset(const std::string &name) {
-    return exePath / "assets" / name;
-}
-
-std::string fetchShader(const std::string &name) {
-    return exePath / "shaders" / name ;
-}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -269,7 +261,6 @@ unsigned int generateTriangleObject() {
 }
 
 int main() {
-    exePath = exeDir();
     #ifdef APP_PROFILE_DEV
         PlatformConfig cfg{800, 600, "app", false, false};
     #else
@@ -294,9 +285,9 @@ int main() {
     unsigned int triangleOne = generateTriangleArray(triangleOneVertices, sizeof(triangleOneVertices));
     unsigned int triangleTwo = generateTriangleArray(triangleTwoVertices, sizeof(triangleTwoVertices));
 
-    Shader program(fetchShader("shader.vert").c_str(), fetchShader("shader.frag").c_str());
-    unsigned int container = loadTexture(fetchAsset("container.jpg"));
-    unsigned int smile = loadTexture(fetchAsset("awesomeface.png"), true);
+    Shader program(paths::shader("shader.vert").c_str(), paths::shader("shader.frag").c_str());
+    unsigned int container = loadTexture(paths::asset("container.jpg"));
+    unsigned int smile = loadTexture(paths::asset("awesomeface.png"), true);
 
     program.use();
     glUniform1i(glGetUniformLocation(program.ID, "texture1"), 0);
