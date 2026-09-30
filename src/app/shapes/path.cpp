@@ -1,6 +1,6 @@
 #include "app/shapes/path.hpp"
 #include "app/graphics.hpp"
-#include <cmath>
+#include <limits>
 
 void Path::moveTo(Point p) {
     points.push_back(p);
@@ -30,8 +30,8 @@ void Path::close() {
 }
 
 Rect Path::bounds() const {
-    float minX = MAXFLOAT, maxX = 0;
-    float minY = MAXFLOAT, maxY = 0;
+    float minX = std::numeric_limits<float>::max(), maxX = std::numeric_limits<float>::lowest();
+    float minY = minX, maxY = maxX;
     for (Point point : points) {
         minX = std::min(point.x, minX);
         maxX = std::max(point.x, maxX);
