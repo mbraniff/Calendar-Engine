@@ -7,6 +7,7 @@ struct Size {
 
 struct Point {
     float x = 0, y = 0;
+    bool operator==(const Point&) const = default;
 };
 
 struct Rect {

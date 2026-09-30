@@ -15,7 +15,7 @@ public:
         GLuint tex = whiteTex_;
         glm::vec4 rect(0, 0, width_, height_);
         if (!masks_.empty()) {
-            const Mask& m = masks_.back();
+            const Mask& m = *masks_.back();
             if (m.tex == 0) return;
             tex = m.tex;
             rect = glm::vec4(m.x0, m.y0, m.w, m.h);
@@ -26,13 +26,13 @@ public:
         textRenderer_.draw(set, text, pos, color, opacity);
     }
 
-    void pushClip(const Path& path) {
-        const Mask* parent = masks_.empty() ? nullptr : &masks_.back();
-        masks_.push_back(Mask::from(path, parent));
+    void pushClip(const Path& path, Mask& mask) {
+        const Mask* parent = masks_.empty() ? nullptr : masks_.back();
+        mask.update(path, parent);
+        masks_.push_back(&mask);
     }
 
     void popClip() {
-        glDeleteTextures(1, &masks_.back().tex);
         masks_.pop_back();
     }
 
@@ -50,7 +50,7 @@ public:
     }
 private:
     std::vector<float> opacity_;
-    std::vector<Mask> masks_;
+    std::vector<Mask*> masks_;
     GLuint whiteTex_ = 0;
     TextRenderer textRenderer_;
     float width_ = 0, height_ = 0;

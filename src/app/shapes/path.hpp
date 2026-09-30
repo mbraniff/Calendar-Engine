@@ -14,4 +14,6 @@ struct Path {
     void close();
 
     Rect bounds() const;
+
+    bool operator==(const Path&) const = default;
 };

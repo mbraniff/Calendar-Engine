@@ -357,126 +357,127 @@ int main() {
 
     auto platform = createPlatform();
     if (!platform->init(cfg)) return 1;
+    {
+        unsigned int triangle = generateTriangleObject();
+        unsigned int rectangle = generateRectangleObject();
+        float triangleOneVertices[] = {
+            -1.0f, -0.5f, 0.0f,
+            0.0f, -0.5f, 0.0f,
+            -0.5f, 0.5f, 0.0f,
+        };
+        float triangleTwoVertices[] = {
+            1.0f, -0.5f, 0.0f,
+            0.0f, -0.5f, 0.0f,
+            0.5f, 0.5f, 0.0f
+        };
+        unsigned int triangleOne = generateTriangleArray(triangleOneVertices, sizeof(triangleOneVertices));
+        unsigned int triangleTwo = generateTriangleArray(triangleTwoVertices, sizeof(triangleTwoVertices));
 
-    unsigned int triangle = generateTriangleObject();
-    unsigned int rectangle = generateRectangleObject();
-    float triangleOneVertices[] = {
-        -1.0f, -0.5f, 0.0f,
-        0.0f, -0.5f, 0.0f,
-        -0.5f, 0.5f, 0.0f,
-    };
-    float triangleTwoVertices[] = {
-        1.0f, -0.5f, 0.0f,
-        0.0f, -0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f
-    };
-    unsigned int triangleOne = generateTriangleArray(triangleOneVertices, sizeof(triangleOneVertices));
-    unsigned int triangleTwo = generateTriangleArray(triangleTwoVertices, sizeof(triangleTwoVertices));
-
-    Shader program(paths::shader("shader.vert").c_str(), paths::shader("shader.frag").c_str());
-    unsigned int container = loadTexture(paths::asset("container.jpg"));
-    unsigned int smile = loadTexture(paths::asset("awesomeface.png"), true);
-
-    program.use();
-    glUniform1i(glGetUniformLocation(program.ID, "texture1"), 0);
-    program.setInt("texture2", 1);
-
-    // platform->onKey = [&, program](int key) {
-    //     processInput(key, program.ID);
-    // };
-
-    unsigned int rect2 = generateRectangleObject2();
-    glm::mat4 model = glm::mat4(1.0f);
-    // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 projection;
-
-    int w, h;
-    platform->framebufferSize(w, h);
-    projection = glm::perspective(glm::radians(45.0f), (float)w/(float)h, 0.1f, 100.0f);
-
-    int modelLoc = glGetUniformLocation(program.ID, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    setView(program.ID);
-    int projLoc = glGetUniformLocation(program.ID, "projection");
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-    unsigned int cube = generateCube();
-
-    glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
-    };
-
-    Renderer renderer;
-    Text text("Howdy yall this is some text that will render bad");
-    renderer.setFrameBuffer(w, h);
-    platform->onFramebufferResize = [&renderer, &w, &h](int wi, int he) {
-        glViewport(0, 0, wi, he);
-        renderer.setFrameBuffer(wi, he);
-        w = wi; h = he;
-    };
-    text.alignment = Alignment::topCenter();
-    text.color = Color::white().withAlpha(0.0f);
-    // text.opacity = 0.75;
-    text.clipShape = std::make_unique<Capsule>();
-    auto subText = std::make_unique<Text>("This is some text under the original text longer string of text so it cuts off past the body");
-    subText->alignment = Alignment::centerLeading();
-    subText->offset.x = -100.0f;
-    subText->color = Color::red();
-    subText->fontWeight = Font::Weight::Heavy;
-    float* xPos = &(subText->offset.x);
-    // subText->opacity = 1.0;
-    // subText->clipShape = std::make_unique<Capsule>();
-    text.addSubview(std::move(subText));
-
-    float lastFrame = 0.0f;
-    float deltaTime = 0.0f;
-    while (!platform->shouldClose()) {
-        float currentFrame = platform->time();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        processInput(platform.get(), program.ID, deltaTime);
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Shader program(paths::shader("shader.vert").c_str(), paths::shader("shader.frag").c_str());
+        unsigned int container = loadTexture(paths::asset("container.jpg"));
+        unsigned int smile = loadTexture(paths::asset("awesomeface.png"), true);
 
         program.use();
-        program.setFloat("opacity", opacity);
+        glUniform1i(glGetUniformLocation(program.ID, "texture1"), 0);
+        program.setInt("texture2", 1);
 
-        glEnable(GL_DEPTH_TEST);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, container);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, smile);
+        // platform->onKey = [&, program](int key) {
+        //     processInput(key, program.ID);
+        // };
 
-        glBindVertexArray(cube);
-        for(unsigned int i = 0; i < 10; i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            program.setMat4("model", model);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        unsigned int rect2 = generateRectangleObject2();
+        glm::mat4 model = glm::mat4(1.0f);
+        // model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 projection;
+
+        int w, h;
+        platform->framebufferSize(w, h);
+        projection = glm::perspective(glm::radians(45.0f), (float)w/(float)h, 0.1f, 100.0f);
+
+        int modelLoc = glGetUniformLocation(program.ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        setView(program.ID);
+        int projLoc = glGetUniformLocation(program.ID, "projection");
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+        unsigned int cube = generateCube();
+
+        glm::vec3 cubePositions[] = {
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(2.0f, 5.0f, -15.0f),
+            glm::vec3(-1.5f, -2.2f, -2.5f),
+            glm::vec3(-3.8f, -2.0, -12.3f),
+            glm::vec3(2.4f, -0.4f, -3.5f),
+            glm::vec3(-1.7f, 3.0f, -7.5f),
+            glm::vec3(1.3f, -2.0f, -2.5f),
+            glm::vec3(1.5f, 2.0f, -2.5f),
+            glm::vec3(1.5f, 0.2f, -1.5f),
+            glm::vec3(-1.3f, 1.0f, -1.5f)
+        };
+
+        Renderer renderer;
+        Text text("Howdy yall this is some text that will render bad");
+        renderer.setFrameBuffer(w, h);
+        platform->onFramebufferResize = [&renderer, &w, &h](int wi, int he) {
+            glViewport(0, 0, wi, he);
+            renderer.setFrameBuffer(wi, he);
+            w = wi; h = he;
+        };
+        text.alignment = Alignment::topCenter();
+        text.color = Color::white().withAlpha(0.0f);
+        // text.opacity = 0.75;
+        text.clipShape = std::make_unique<Capsule>();
+        auto subText = std::make_unique<Text>("This is some text under the original text longer string of text so it cuts off past the body");
+        subText->alignment = Alignment::centerLeading();
+        subText->offset.x = -100.0f;
+        subText->color = Color::red();
+        subText->fontWeight = Font::Weight::Heavy;
+        float* xPos = &(subText->offset.x);
+        // subText->opacity = 1.0;
+        // subText->clipShape = std::make_unique<Capsule>();
+        text.addSubview(std::move(subText));
+
+        float lastFrame = 0.0f;
+        float deltaTime = 0.0f;
+        while (!platform->shouldClose()) {
+            float currentFrame = platform->time();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+            processInput(platform.get(), program.ID, deltaTime);
+            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            program.use();
+            program.setFloat("opacity", opacity);
+
+            glEnable(GL_DEPTH_TEST);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, container);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, smile);
+
+            glBindVertexArray(cube);
+            for(unsigned int i = 0; i < 10; i++) {
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, cubePositions[i]);
+                float angle = 20.0f * i;
+                model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+                program.setMat4("model", model);
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+            }
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+
+            glBindVertexArray(0);
+
+            text.layout(Rect{{0, 0}, (float)w, (float)h});
+            text.render(renderer);
+            *xPos += 25.0f * deltaTime;
+
+            platform->swapBuffers();
+            platform->pollEvents();
         }
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        glBindVertexArray(0);
-
-        text.layout(Rect{{0, 0}, (float)w, (float)h});
-        text.render(renderer);
-        *xPos += 25.0f * deltaTime;
-
-        platform->swapBuffers();
-        platform->pollEvents();
     }
     platform = nullptr;
     return 0;

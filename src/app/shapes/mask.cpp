@@ -32,40 +32,62 @@ GLuint uploadMask(const std::vector<uint8_t>& coverage, int w, int h) {
     return tex;
 }
 
-Mask Mask::from(const Path &path, const Mask* parent) {
+void Mask::update(const Path& path, const Mask* parent) {
+    uint64_t pv = parent ? parent->version : 0;
+    if (version != 0 && path == path_ && pv == parentVersion_) return;
+
+    static uint64_t nextVersion = 1;
+    path_ = path;
+    parentVersion_ = pv;
+    version = nextVersion++;
+    int oldW = w, oldH = h;
+
     Rect b = path.bounds();
-    int x0 = (int)std::floor(b.origin.x);
-    int y0 = (int)std::floor(b.origin.y);
-    int x1 = (int)std::ceil(b.origin.x + b.width);
-    int y1 = (int)std::ceil(b.origin.y + b.height);
+    int left   = (int)std::floor(b.origin.x);
+    int top    = (int)std::floor(b.origin.y);
+    int right  = (int)std::ceil(b.origin.x + b.width);
+    int bottom = (int)std::ceil(b.origin.y + b.height);
 
     if (parent) {
-        x0 = std::max(x0, parent->x0);
-        y0 = std::max(y0, parent->y0);
-        x1 = std::min(x1, parent->x0 + parent->w);
-        y1 = std::min(y1, parent->y0 + parent->h);
+        left   = std::max(left,   parent->x0);
+        top    = std::max(top,    parent->y0);
+        right  = std::min(right,  parent->x0 + parent->w);
+        bottom = std::min(bottom, parent->y0 + parent->h);
     }
 
-    Mask m;
-    m.x0 = x0; m.y0 = y0;
-    m.w = std::max(0, x1 - x0);
-    m.h = std::max(0, y1 - y0);
-    if (m.w == 0 || m.h == 0) return m;
+    x0 = left;
+    y0 = top;
+    w = std::max(0, right - left);
+    h = std::max(0, bottom - top);
+    if (w == 0 || h == 0) {
+        if (tex) glDeleteTextures(1, &tex);
+        tex = 0;
+        coverage.clear();
+        return;
+    }
 
-    m.coverage = rasterize(path, m.x0, m.y0, m.w, m.h);
+    coverage = rasterize(path, x0, y0, w, h);
 
     if (parent) {
-        for (int j = 0; j < m.h; j++) {
-            for (int i = 0; i < m.w; i++) {
-                int px = m.x0 + i - parent->x0;
-                int py = m.y0 + j - parent->y0;
-                uint8_t& c = m.coverage[j * m.w + i];
+        for (int j = 0; j < h; j++) {
+            for (int i = 0; i < w; i++) {
+                int px = x0 + i - parent->x0;
+                int py = y0 + j - parent->y0;
+                uint8_t& c = coverage[j * w + i];
                 c = uint8_t(c * parent->coverage[py * parent->w + px] / 255);
             }
         }
     }
-    m.tex = uploadMask(m.coverage, m.w, m.h);
-    return m;
+
+    if (tex && w == oldW && h == oldH) {
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RED, GL_UNSIGNED_BYTE, coverage.data());
+    } else {
+        if (tex) glDeleteTextures(1, &tex);
+        tex = uploadMask(coverage, w, h);
+    }
+
 }
 
 std::vector<uint8_t> rasterize(const Path &path, int x0, int y0, int w, int h) {

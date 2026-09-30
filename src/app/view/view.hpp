@@ -29,7 +29,7 @@ public:
     }
 
     void render(Renderer& r) {
-        if (clipShape) r.pushClip(clipShape->pathIn(frame_));
+        if (clipShape) r.pushClip(clipShape->pathIn(frame_), clipMask_);
         r.pushOpacity(opacity);
         drawSelf(r);
         for (auto& child : subviews_)
@@ -55,4 +55,5 @@ protected:
 
     Rect frame_;
     std::vector<std::unique_ptr<View>> subviews_;
+    Mask clipMask_;
 };

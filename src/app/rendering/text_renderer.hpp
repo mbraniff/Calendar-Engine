@@ -1,5 +1,4 @@
 #pragma once
-#include "app/shapes/mask.hpp"
 #include "app/text/font.hpp"
 #include "app/shader.hpp"
 #include "app/GL.h"
