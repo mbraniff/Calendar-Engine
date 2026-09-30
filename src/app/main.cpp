@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <string>
+#include "app/containers/hstack.hpp"
 #include "app/containers/vstack.hpp"
 #include "app/graphics.hpp"
 #include "app/rendering/renderer.hpp"
@@ -455,13 +456,18 @@ int main() {
         subText->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue());
 
         auto vstack = std::make_shared<VStack>();
+        auto hstack = std::make_shared<HStack>(0);
         auto frame = vstack->frame({.maxWidth = infinity, .maxHeight = infinity});
         vstack->padding(8);
         vstack->addSubview(text);
         vstack->addSubview(subText);
-        vstack->clipShape = std::make_unique<Rectangle>();
-        auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
-        frame->background = bg;
+        hstack->clipShape = std::make_unique<Rectangle>();
+        // auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
+        // frame->background = bg;
+        hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<Circle>(), Color::blue()));
+        hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(25), Color::green()));
+        hstack->padding(8);
+        mainView.addSubview(hstack);
         mainView.addSubview(frame);
         mainView.addSubview(fps);
         subText->padding(8);
