@@ -42,7 +42,7 @@ public:
         return Size{frame_.width, frame_.height};
     }
 
-    void addSubview(std::unique_ptr<View> view) {
+    void addSubview(std::shared_ptr<View> view) {
         subviews_.push_back(std::move(view));
     }
 protected:
@@ -54,6 +54,6 @@ protected:
     virtual void drawSelf(Renderer&) {}
 
     Rect frame_;
-    std::vector<std::unique_ptr<View>> subviews_;
+    std::vector<std::shared_ptr<View>> subviews_;
     Mask clipMask_;
 };

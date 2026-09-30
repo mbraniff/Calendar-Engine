@@ -417,32 +417,32 @@ int main() {
         };
 
         Renderer renderer;
-        Text text("Howdy yall this is some text that will render bad");
+        View mainView;
+        auto text = std::make_shared<Text>("Howdy yall this is some text that will render bad");
         renderer.setFrameBuffer(w, h);
         platform->onFramebufferResize = [&renderer, &w, &h](int wi, int he) {
             glViewport(0, 0, wi, he);
             renderer.setFrameBuffer(wi, he);
             w = wi; h = he;
         };
-        text.alignment = Alignment::topCenter();
-        text.color = Color::white().withAlpha(0.0f);
+        text->alignment = Alignment::topCenter();
+        text->color = Color::white().withAlpha(0.0f);
         // text.opacity = 0.75;
-        text.clipShape = std::make_unique<Capsule>();
-        auto subText = std::make_unique<Text>("This is some text under the original text longer string of text so it cuts off past the body");
+        text->clipShape = std::make_unique<Capsule>();
+        auto subText = std::make_shared<Text>("This is some text under the original text longer string of text so it cuts off past the body");
         subText->alignment = Alignment::centerLeading();
         subText->offset.x = -100.0f;
         subText->color = Color::red();
         subText->fontWeight = Font::Weight::Heavy;
-        float* xPos = &(subText->offset.x);
         // subText->opacity = 1.0;
         // subText->clipShape = std::make_unique<Capsule>();
-        text.addSubview(std::move(subText));
+        text->addSubview(subText);
 
         // Debug FPS counter, averaged over half a second so it's readable.
-        Text fps("FPS --");
-        fps.alignment = Alignment::topTrailing();
-        fps.offset = { -8.0f, 8.0f };
-        fps.color = Color::green();
+        auto fps = std::make_shared<Text>("FPS --");
+        fps->alignment = Alignment::topTrailing();
+        fps->offset = { -8.0f, 8.0f };
+        fps->color = Color::green();
         int fpsFrames = 0;
         float fpsElapsed = 0.0f;
 
@@ -453,51 +453,52 @@ int main() {
         bool frameLimit = false;
         float lastFrame = 0.0f;
         float deltaTime = 0.0f;
+        mainView.addSubview(std::move(text));
+        mainView.addSubview(fps);
         while (!platform->shouldClose()) {
             float currentFrame = platform->time();
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
             processInput(platform.get(), program.ID, deltaTime);
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            program.use();
-            program.setFloat("opacity", opacity);
+            // program.use();
+            // program.setFloat("opacity", opacity);
 
-            glEnable(GL_DEPTH_TEST);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, container);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, smile);
+            // glEnable(GL_DEPTH_TEST);
+            // glActiveTexture(GL_TEXTURE0);
+            // glBindTexture(GL_TEXTURE_2D, container);
+            // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            // glActiveTexture(GL_TEXTURE1);
+            // glBindTexture(GL_TEXTURE_2D, smile);
 
-            glBindVertexArray(cube);
-            for(unsigned int i = 0; i < 10; i++) {
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, cubePositions[i]);
-                float angle = 20.0f * i;
-                model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-                program.setMat4("model", model);
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-            }
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            // glBindVertexArray(cube);
+            // for(unsigned int i = 0; i < 10; i++) {
+            //     glm::mat4 model = glm::mat4(1.0f);
+            //     model = glm::translate(model, cubePositions[i]);
+            //     float angle = 20.0f * i;
+            //     model = glm::rotate(model, i%3==0 ? (float)platform->time() : 1 * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            //     program.setMat4("model", model);
+            //     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+            // }
+            // glDrawArrays(GL_TRIANGLES, 0, 3);
 
-            glBindVertexArray(0);
+            // glBindVertexArray(0);
 
-            text.layout(Rect{{0, 0}, (float)w, (float)h});
-            text.render(renderer);
-            *xPos += 25.0f * deltaTime;
+            subText->offset.x += 25.0f * deltaTime;
 
             fpsFrames++;
             fpsElapsed += deltaTime;
             if (fpsElapsed >= 0.5f) {
-                fps.text = "FPS " + std::to_string((int)std::round(fpsFrames / fpsElapsed));
+                fps->text = "FPS " + std::to_string((int)std::round(fpsFrames / fpsElapsed));
                 fpsFrames = 0;
                 fpsElapsed = 0.0f;
             }
-            fps.layout(Rect{{0, 0}, (float)w, (float)h});
-            fps.render(renderer);
+
+            mainView.layout({{0, 0 }, (float)w, (float)h});
+            mainView.render(renderer);
 
             platform->swapBuffers();
             platform->pollEvents();
