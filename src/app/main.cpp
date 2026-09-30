@@ -23,6 +23,7 @@
 #include <string_view>
 #include <unistd.h>
 #include <vector>
+#include <thread>
 
 static std::set<char> whitespace = { '\n', ' ', '\t', '\r' };
 
@@ -437,6 +438,19 @@ int main() {
         // subText->clipShape = std::make_unique<Capsule>();
         text.addSubview(std::move(subText));
 
+        // Debug FPS counter, averaged over half a second so it's readable.
+        Text fps("FPS --");
+        fps.alignment = Alignment::topTrailing();
+        fps.offset = { -8.0f, 8.0f };
+        fps.color = Color::green();
+        int fpsFrames = 0;
+        float fpsElapsed = 0.0f;
+
+        int maxFrames = 60;
+        using clock = std::chrono::steady_clock;
+        const auto frameBudget = std::chrono::microseconds(1'000'000 / maxFrames);
+        auto nextFrame = clock::now();
+        bool frameLimit = false;
         float lastFrame = 0.0f;
         float deltaTime = 0.0f;
         while (!platform->shouldClose()) {
@@ -475,8 +489,24 @@ int main() {
             text.render(renderer);
             *xPos += 25.0f * deltaTime;
 
+            fpsFrames++;
+            fpsElapsed += deltaTime;
+            if (fpsElapsed >= 0.5f) {
+                fps.text = "FPS " + std::to_string((int)std::round(fpsFrames / fpsElapsed));
+                fpsFrames = 0;
+                fpsElapsed = 0.0f;
+            }
+            fps.layout(Rect{{0, 0}, (float)w, (float)h});
+            fps.render(renderer);
+
             platform->swapBuffers();
             platform->pollEvents();
+
+            if (frameLimit) {
+                nextFrame += frameBudget;
+                std::this_thread::sleep_until(nextFrame);
+                if (clock::now() > nextFrame + frameBudget) nextFrame = clock::now();
+            }
         }
     }
     platform = nullptr;
