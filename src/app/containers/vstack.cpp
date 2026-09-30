@@ -3,11 +3,12 @@
 #include <cstddef>
 
 void VStack::layoutSubviews() {
-    float y = frame_.origin.y;
+    Rect frame = contentFrame();
+    float y = frame.origin.y;
     for (auto& child : subviews_) {
-        Size s = child->sizeThatFits({frame_.width, frame_.height});
+        Size s = child->sizeThatFits({frame.width, frame.height});
 
-        float x = frame_.origin.x + (frame_.width - s.width) * layoutAlignment.x;
+        float x = frame.origin.x + (frame.width - s.width) * layoutAlignment.x;
         
         child->layout(Rect { { x, y }, s.width, s.height});
         y += s.height + spacing;

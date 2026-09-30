@@ -40,3 +40,22 @@ struct Alignment {
     static constexpr Alignment bottomCenter() { return { 0.5f, 1.0f }; }
     static constexpr Alignment bottomTrailing() { return { 1.0f, 1.0f }; }
 };
+
+struct Padding {
+    enum Edge { Left, Top, Right, Bottom, Horizontal, Vertical, All};
+    float left = 0, top = 0, right = 0, bottom = 0;
+
+    Padding(float value) : left(value), top(value), right(value), bottom(value) {}
+
+    void set(Edge edge, float value) {
+        switch (edge) {
+        case Edge::Left: left = value; break;
+        case Edge::Top: top = value; break;
+        case Edge::Right: right = value; break;
+        case Edge::Bottom: bottom = value; break;
+        case Edge::Horizontal: left = right = value; break;
+        case Edge::Vertical: top = bottom = value; break;
+        case Edge::All: left = right = top = bottom = value; break;
+        }
+    }
+};

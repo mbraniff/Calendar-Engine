@@ -6,7 +6,7 @@ Text::Text(std::string text) {
 }
 
 void Text::drawSelf(Renderer &r) {
-    r.drawText(font.get(fontSize, fontWeight), text, frame_.origin, color);
+    r.drawText(font.get(fontSize, fontWeight), text, contentFrame().origin, color);
 }
 
 Size Text::measure(Size proposal) {

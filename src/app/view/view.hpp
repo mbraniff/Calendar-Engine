@@ -14,10 +14,16 @@ public:
     std::unique_ptr<Shape> clipShape;
     std::shared_ptr<View> background;
 
-    Size sizeThatFits(Size proposal) { return measure(proposal); }
+    Size sizeThatFits(Size proposal) {
+        float padW = padding_.left + padding_.right;
+        float padH = padding_.top + padding_.bottom;
+        Size inner = measure({ std::max(0.0f, proposal.width - padW),
+            std::max(0.0f, proposal.height - padH) });
+        return { inner.width + padW, inner.height + padH };
+    }
 
     void layout(Rect frame) {
-        Size want = measure({frame.width, frame.height});
+        Size want = sizeThatFits({frame.width, frame.height});
         want.width = std::min(want.width, frame.width);
         want.height = std::min(want.height, frame.height);
 
@@ -51,15 +57,27 @@ public:
     void addSubview(std::shared_ptr<View> view) {
         subviews_.push_back(std::move(view));
     }
+
+    void padding(float value, Padding::Edge edge = Padding::Edge::All) {
+        padding_.set(edge, value);
+    }
+
 protected:
     virtual Size measure(Size proposed) { return proposed; }
     virtual void layoutSubviews() {
         for (auto& child : subviews_)
-            child->layout(frame_);
+            child->layout(contentFrame());
     }
     virtual void drawSelf(Renderer&) {}
+
+    Rect contentFrame() const {
+        return { { frame_.origin.x + padding_.left, frame_.origin.y + padding_.top},
+            frame_.width - padding_.left - padding_.right,
+            frame_.height - padding_.top - padding_.bottom };
+    }
 
     Rect frame_;
     std::vector<std::shared_ptr<View>> subviews_;
     Mask clipMask_;
+    Padding padding_ = Padding(0);
 };
