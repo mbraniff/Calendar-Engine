@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <string>
+#include "app/containers/vstack.hpp"
 #include "app/rendering/renderer.hpp"
 #include "app/shapes/shape.hpp"
 #include "app/shapes/shape_view.hpp"
@@ -427,17 +428,13 @@ int main() {
             w = wi; h = he;
         };
         text->alignment = Alignment::topCenter();
-        text->color = Color::white().withAlpha(0.0f);
-        // text.opacity = 0.75;
         text->clipShape = std::make_unique<Capsule>();
+        text->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::green());
         auto subText = std::make_shared<Text>("This is some text under the original text longer string of text so it cuts off past the body");
         subText->alignment = Alignment::centerLeading();
         subText->offset.x = -100.0f;
         subText->color = Color::red();
         subText->fontWeight = Font::Weight::Heavy;
-        // subText->opacity = 1.0;
-        // subText->clipShape = std::make_unique<Capsule>();
-        text->addSubview(subText);
 
         // Debug FPS counter, averaged over half a second so it's readable.
         auto fps = std::make_shared<Text>("FPS --");
@@ -454,8 +451,14 @@ int main() {
         bool frameLimit = false;
         float lastFrame = 0.0f;
         float deltaTime = 0.0f;
-        text->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue().withAlpha(0.5));
-        mainView.addSubview(std::move(text));
+        subText->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue());
+
+        auto vstack = std::make_shared<VStack>();
+        vstack->addSubview(text);
+        vstack->addSubview(subText);
+        vstack->clipShape = std::make_unique<Rectangle>();
+        vstack->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
+        mainView.addSubview(vstack);
         mainView.addSubview(fps);
         while (!platform->shouldClose()) {
             float currentFrame = platform->time();
