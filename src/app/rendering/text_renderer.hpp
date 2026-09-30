@@ -1,10 +1,12 @@
 #pragma once
+#include "app/shapes/mask.hpp"
 #include "app/text/font.hpp"
 #include "app/shader.hpp"
 #include "app/GL.h"
 #include "app/paths.hpp"
 #include "app/graphics.hpp"
 #include <cmath>
+#include <glm/gtc/type_ptr.hpp>
 #include <string_view>
 
 class TextRenderer {
@@ -31,6 +33,8 @@ public:
 
     void draw(Font::GlyphSet& set, std::string_view text, Point pos, Color color, float opacity) {
         shader_.use();
+        shader_.setInt("text", 0);
+        shader_.setInt("clipMask", 1);
         shader_.setFloat("opacity", opacity);
         shader_.set4Float("textColor", glm::vec4(color.r, color.g, color.b, color.a));
         glBindVertexArray(vao_);
@@ -60,6 +64,14 @@ public:
         glm::mat4 textProjection = glm::ortho(0.0f, (float)w, (float)h, 0.0f);
         shader_.use();
         shader_.setMat4("projection", textProjection);
+        shader_.setFloat("viewportHeight", h);
+    }
+
+    void setMask(const glm::vec4& pos, GLuint tex) {
+        shader_.use();
+        shader_.set4Float("maskRect", pos);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, tex);
     }
 
 private:

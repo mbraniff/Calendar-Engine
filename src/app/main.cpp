@@ -5,8 +5,10 @@
 #include <iostream>
 #include "GL.h"
 #include <GLFW/glfw3.h>
+#include <memory>
 #include <string>
 #include "app/rendering/renderer.hpp"
+#include "app/shapes/shape.hpp"
 #include "app/text/text.hpp"
 #include "shader.hpp"
 #include "stb_image.h"
@@ -421,14 +423,18 @@ int main() {
         renderer.setFrameBuffer(wi, he);
         w = wi; h = he;
     };
-    text.alignment = Alignment::topLeading();
-    text.color = Color::white();
-    text.opacity = 0.75;
-    auto subText = std::make_unique<Text>("This is some text under the original text");
-    subText->alignment = Alignment::bottomCenter();
-    subText->offset.y = 16.0f;
-    subText->color = Color::white();
-    subText->opacity = 0.75;
+    text.alignment = Alignment::topCenter();
+    text.color = Color::white().withAlpha(0.0f);
+    // text.opacity = 0.75;
+    text.clipShape = std::make_unique<Capsule>();
+    auto subText = std::make_unique<Text>("This is some text under the original text longer string of text so it cuts off past the body");
+    subText->alignment = Alignment::centerLeading();
+    subText->offset.x = -100.0f;
+    subText->color = Color::red();
+    subText->fontWeight = Font::Weight::Heavy;
+    float* xPos = &(subText->offset.x);
+    // subText->opacity = 1.0;
+    // subText->clipShape = std::make_unique<Capsule>();
     text.addSubview(std::move(subText));
 
     float lastFrame = 0.0f;
@@ -467,16 +473,7 @@ int main() {
 
         text.layout(Rect{{0, 0}, (float)w, (float)h});
         text.render(renderer);
-        float speed = 100.0f;
-        text.offset.x += speed * deltaTime;
-        auto size = text.size();
-        if (text.offset.x >= w - size.width) {
-            text.offset.x = 0;
-            text.offset.y += speed * deltaTime * 10;
-        }
-        if (text.offset.y >= h - size.height) {
-            text.offset.y = 0;
-        }
+        *xPos += 25.0f * deltaTime;
 
         platform->swapBuffers();
         platform->pollEvents();

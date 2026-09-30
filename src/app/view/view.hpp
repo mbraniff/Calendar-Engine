@@ -4,12 +4,14 @@
 #include <vector>
 #include "app/graphics.hpp"
 #include "app/rendering/renderer.hpp"
+#include "app/shapes/shape.hpp"
 
 class View {
 public:
     Alignment alignment = Alignment::center();
     float opacity = 1.0f;
     Point offset;
+    std::unique_ptr<Shape> clipShape;
 
     void layout(Rect frame) {
         Size want = measure({frame.width, frame.height});
@@ -27,12 +29,12 @@ public:
     }
 
     void render(Renderer& r) {
-        // r.pushClip(clipPath_);
+        if (clipShape) r.pushClip(clipShape->pathIn(frame_));
         r.pushOpacity(opacity);
         drawSelf(r);
         for (auto& child : subviews_)
             child->render(r);
-        // r.popClip();
+        if (clipShape) r.popClip();
         r.popOpacity();
     }
 
