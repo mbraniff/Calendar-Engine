@@ -12,6 +12,8 @@ struct Point {
 struct Rect {
     Point origin;
     float width = 0, height = 0;
+
+    Point center() { return { origin.x + width / 2, origin.y + height / 2 }; }
 };
 
 struct Color {
