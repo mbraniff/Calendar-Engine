@@ -1,6 +1,8 @@
 #pragma once
+#include <limits>
 #include <optional>
-#define F_INFINITY 3.40282e38
+
+inline constexpr float infinity = std::numeric_limits<float>::infinity();
 
 struct Size {
     float width = 0;

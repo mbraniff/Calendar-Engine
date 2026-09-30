@@ -455,7 +455,7 @@ int main() {
         subText->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue());
 
         auto vstack = std::make_shared<VStack>();
-        auto frame = vstack->frame({.maxWidth = F_INFINITY, .maxHeight = F_INFINITY});
+        auto frame = vstack->frame({.maxWidth = infinity, .maxHeight = infinity});
         vstack->padding(8);
         vstack->addSubview(text);
         vstack->addSubview(subText);
