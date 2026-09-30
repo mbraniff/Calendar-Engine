@@ -36,8 +36,8 @@ Mask Mask::from(const Path &path, const Mask* parent) {
     Rect b = path.bounds();
     int x0 = (int)std::floor(b.origin.x);
     int y0 = (int)std::floor(b.origin.y);
-    int x1 = (int)std::floor(b.origin.x + b.width);
-    int y1 = (int)std::floor(b.origin.y + b.height);
+    int x1 = (int)std::ceil(b.origin.x + b.width);
+    int y1 = (int)std::ceil(b.origin.y + b.height);
 
     if (parent) {
         x0 = std::max(x0, parent->x0);
@@ -75,7 +75,7 @@ std::vector<uint8_t> rasterize(const Path &path, int x0, int y0, int w, int h) {
     std::vector<unsigned short> contours;
 
     auto add = [&](Point p, unsigned char tag) {
-        pts.push_back({ FT_Pos(std::lround(p.x - x0) << 6), FT_Pos(std::lround(y0 + h - p.y) << 6)} );
+        pts.push_back({ FT_Pos(std::lround((p.x - x0) * 64.0f)), FT_Pos(std::lround((y0 + h - p.y) * 64.0f))} );
         tags.push_back(tag);
     };
 
