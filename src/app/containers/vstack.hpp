@@ -1,6 +1,7 @@
 #pragma once
 #include "app/graphics.hpp"
 #include "app/view/view.hpp"
+#include <vector>
 
 class VStack : public View {
 public:
@@ -13,4 +14,7 @@ public:
 protected:
     void layoutSubviews() override;
     Size measure(Size proposed) override;
+
+private:
+    std::vector<Size> childSizes(Size proposal);
 };
