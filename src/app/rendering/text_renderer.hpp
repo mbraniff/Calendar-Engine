@@ -32,7 +32,7 @@ public:
 
     void draw(Font::GlyphSet& set, std::string_view text, Point pos) {
         shader_.use();
-        shader_.setInt("text", 0);
+        shader_.setInt("coverage", 0);
         shader_.setInt("clipMask", 1);
         glBindVertexArray(vao_);
         glActiveTexture(GL_TEXTURE0);
@@ -78,7 +78,7 @@ public:
     
     void setColor(const Color& color) {
         shader_.use();
-        shader_.set4Float("textColor", glm::vec4(color.r, color.g, color.b, color.a));
+        shader_.set4Float("color", glm::vec4(color.r, color.g, color.b, color.a));
     }
 
 private:

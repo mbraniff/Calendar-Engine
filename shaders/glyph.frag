@@ -1,11 +1,11 @@
 in vec2 TexCoords;
-out vec4 color;
+out vec4 FragColor;
 
-uniform sampler2D text;
+uniform sampler2D coverage;
 uniform sampler2D clipMask;
 uniform vec4 maskRect;
 uniform float viewportHeight;
-uniform vec4 textColor;
+uniform vec4 color;
 uniform float opacity;
 
 float clipCoverage() {
@@ -18,6 +18,6 @@ float clipCoverage() {
 }
 
 void main() {
-    float a = texture(text, TexCoords).r;
-    color = vec4(textColor.rgb, a * textColor.a * opacity * clipCoverage());
+    float a = texture(coverage, TexCoords).r;
+    FragColor = vec4(color.rgb, a * color.a * opacity * clipCoverage());
 }
