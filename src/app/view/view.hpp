@@ -14,6 +14,8 @@ public:
     std::unique_ptr<Shape> clipShape;
     std::shared_ptr<View> background;
 
+    Size sizeThatFits(Size proposal) { return measure(proposal); }
+
     void layout(Rect frame) {
         Size want = measure({frame.width, frame.height});
         want.width = std::min(want.width, frame.width);

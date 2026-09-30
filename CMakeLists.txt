@@ -55,6 +55,7 @@ add_executable(calendar
     src/app/shapes/mask.cpp
     src/app/shapes/path.cpp
     src/app/shapes/shape_view.cpp
+    src/app/containers/vstack.cpp
 )
 target_include_directories(calendar PRIVATE src)
 target_compile_definitions(calendar PRIVATE
