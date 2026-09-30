@@ -11,19 +11,17 @@
 class Renderer {
 public:
     Renderer() { whiteTex_ = uploadMask({255}, 1, 1); }
+
     void drawText(Font::GlyphSet &set, const std::string_view text, Point pos, const Color &color) {
         GLuint tex = whiteTex_;
         glm::vec4 rect(0, 0, width_, height_);
-        if (!masks_.empty()) {
-            const Mask& m = *masks_.back();
-            if (m.tex == 0) return;
-            tex = m.tex;
-            rect = glm::vec4(m.x0, m.y0, m.w, m.h);
-        }
+        if(!getMask(tex, rect)) return;
         textRenderer_.setMask(rect, tex);
         float opacity = 1.0f;
         for (float o : opacity_) opacity *= o;
-        textRenderer_.draw(set, text, pos, color, opacity);
+        textRenderer_.setOpacity(opacity);
+        textRenderer_.setColor(color);
+        textRenderer_.draw(set, text, pos);
     }
 
     void pushClip(const Path& path, Mask& mask) {
@@ -54,4 +52,13 @@ private:
     GLuint whiteTex_ = 0;
     TextRenderer textRenderer_;
     float width_ = 0, height_ = 0;
+
+    bool getMask(GLuint& tex, glm::vec4& rect) {
+        if (masks_.empty()) return true;
+        const Mask& m = *masks_.back();
+        if (m.tex == 0) return false; 
+        tex = m.tex;
+        rect = glm::vec4(m.x0, m.y0, m.w, m.h);
+        return true;
+    }
 };
