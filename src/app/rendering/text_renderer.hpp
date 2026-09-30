@@ -32,7 +32,7 @@ public:
     void draw(Font::GlyphSet& set, std::string_view text, Point pos, Color color, float opacity) {
         shader_.use();
         shader_.setFloat("opacity", opacity);
-        glUniform3f(glGetUniformLocation(shader_.ID, "textColor"), color.r, color.g, color.b);
+        shader_.set4Float("textColor", glm::vec4(color.r, color.g, color.b, color.a));
         glBindVertexArray(vao_);
         glActiveTexture(GL_TEXTURE0);
 

@@ -17,7 +17,8 @@ struct Rect {
 };
 
 struct Color {
-    float r = 0.0f, g = 0.0f, b = 0.0f;
+    float r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+    const Color withAlpha(float alpha) const { return {r, g, b, alpha }; }
     static constexpr Color white() { return { 1.0f, 1.0f, 1.0f }; }
     static constexpr Color black() { return { 0.0f, 0.0f, 0.0f }; }
     static constexpr Color red() { return { 1.0f, 0.0f, 0.0f }; }

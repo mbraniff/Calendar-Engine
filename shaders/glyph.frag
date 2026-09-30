@@ -2,10 +2,10 @@ in vec2 TexCoords;
 out vec4 color;
 
 uniform sampler2D text;
-uniform vec3 textColor;
+uniform vec4 textColor;
 uniform float opacity;
 
 void main() {
-    vec4 sampled = vec4(1.0f, 1.0f, 1.0f, texture(text, TexCoords).r);
-    color = vec4(textColor, opacity) * sampled;
+    float a = texture(text, TexCoords).r;
+    color = vec4(textColor.rgb, a * textColor.a * opacity);
 }
