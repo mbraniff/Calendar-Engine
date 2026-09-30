@@ -423,10 +423,12 @@ int main() {
     };
     text.alignment = Alignment::topLeading();
     text.color = Color::white();
+    text.opacity = 0.75;
     auto subText = std::make_unique<Text>("This is some text under the original text");
     subText->alignment = Alignment::bottomCenter();
     subText->offset.y = 16.0f;
-    subText->color = Color::blue();
+    subText->color = Color::white();
+    subText->opacity = 0.75;
     text.addSubview(std::move(subText));
 
     float lastFrame = 0.0f;

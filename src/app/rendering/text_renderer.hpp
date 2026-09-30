@@ -28,8 +28,9 @@ public:
     TextRenderer(const TextRenderer&) = delete;
     TextRenderer& operator=(const TextRenderer&) = delete;
 
-    void draw(Font::GlyphSet& set, std::string_view text, Point pos, glm::vec3 color) {
+    void draw(Font::GlyphSet& set, std::string_view text, Point pos, Color color, float opacity) {
         shader_.use();
+        shader_.setFloat("opacity", opacity);
         glUniform3f(glGetUniformLocation(shader_.ID, "textColor"), color.r, color.g, color.b);
         glBindVertexArray(vao_);
         glActiveTexture(GL_TEXTURE0);
