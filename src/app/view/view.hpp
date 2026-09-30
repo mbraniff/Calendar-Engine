@@ -6,7 +6,7 @@
 #include "app/rendering/renderer.hpp"
 #include "app/shapes/shape.hpp"
 
-class View {
+class View : public std::enable_shared_from_this<View> {
 public:
     Alignment alignment = Alignment::center();
     float opacity = 1.0f;
@@ -61,6 +61,8 @@ public:
     void padding(float value, Padding::Edge edge = Padding::Edge::All) {
         padding_.set(edge, value);
     }
+
+    std::shared_ptr<View> frame(FrameOptions options);
 
 protected:
     virtual Size measure(Size proposed) { return proposed; }

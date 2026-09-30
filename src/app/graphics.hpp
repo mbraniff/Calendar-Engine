@@ -1,4 +1,6 @@
 #pragma once
+#include <optional>
+#define F_INFINITY 3.40282e38
 
 struct Size {
     float width = 0;
@@ -58,4 +60,10 @@ struct Padding {
         case Edge::All: left = right = top = bottom = value; break;
         }
     }
+};
+
+struct FrameOptions {
+    std::optional<float> width, height;
+    std::optional<float> minWidth, maxWidth, minHeight, maxHeight;
+    Alignment alignment = Alignment::center();
 };
