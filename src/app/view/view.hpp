@@ -18,7 +18,7 @@ public:
 
         frame_.origin = {
             frame.origin.x + (frame.width - want.width) * alignment.x + offset.x,
-            frame.origin.y + (frame.height - want.height) * alignment.y - offset.y,
+            frame.origin.y + (frame.height - want.height) * alignment.y + offset.y,
         };
         frame_.width = want.width;
         frame_.height = want.height;

@@ -24,14 +24,15 @@ struct Color {
 };
 
 struct Alignment {
-    float x, y;
-    static constexpr Alignment topLeading() { return { 0.0f, 1.0f }; }
-    static constexpr Alignment topCenter() { return { 0.5f, 1.0f }; }
-    static constexpr Alignment topTrailing() { return { 1.0f, 1.0f }; }
+    // y-down: top is 0, bottom is 1.
+    float x = 0.5f, y = 0.5f;
+    static constexpr Alignment topLeading() { return { 0.0f, 0.0f }; }
+    static constexpr Alignment topCenter() { return { 0.5f, 0.0f }; }
+    static constexpr Alignment topTrailing() { return { 1.0f, 0.0f }; }
     static constexpr Alignment centerLeading() { return { 0.0f, 0.5f }; }
     static constexpr Alignment center() { return { 0.5f, 0.5f }; }
     static constexpr Alignment centerTrailing() { return { 1.0f, 0.5f }; }
-    static constexpr Alignment bottomLeading() { return { 0.0f, 0.0f }; }
-    static constexpr Alignment bottomCenter() { return { 0.5f, 0.0f }; }
-    static constexpr Alignment bottomTrailing() { return { 1.0f, 0.0f }; }
+    static constexpr Alignment bottomLeading() { return { 0.0f, 1.0f }; }
+    static constexpr Alignment bottomCenter() { return { 0.5f, 1.0f }; }
+    static constexpr Alignment bottomTrailing() { return { 1.0f, 1.0f }; }
 };

@@ -8,5 +8,6 @@ void main()
 {
     vec2 pos = rect.xy + aCorner * rect.zw;
     gl_Position = projection * vec4(pos, 0.0, 1.0);
-    TexCoords = vec2(aCorner.x, 1.0 - aCorner.y);
+    // Corner y = 0 is the quad's top, and bitmap row 0 is the glyph's top.
+    TexCoords = aCorner;
 }

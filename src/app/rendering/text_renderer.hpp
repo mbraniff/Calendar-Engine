@@ -4,6 +4,7 @@
 #include "app/GL.h"
 #include "app/paths.hpp"
 #include "app/graphics.hpp"
+#include <cmath>
 #include <string_view>
 
 class TextRenderer {
@@ -39,10 +40,12 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        float x = pos.x, y = pos.y;
+        // pos is the top-left of the line; the baseline sits ascender pixels below it.
+        float x = pos.x;
+        float baseline = std::round(pos.y + set.ascender);
         for (auto& c : text) {
             auto& ch = set.chars[c];
-            auto data = glm::vec4(x + ch.Bearing.x, y - (ch.Size.y - ch.Bearing.y), ch.Size.x, ch.Size.y);
+            auto data = glm::vec4(x + ch.Bearing.x, baseline - ch.Bearing.y, ch.Size.x, ch.Size.y);
             shader_.set4Float("rect", data);
             glBindTexture(GL_TEXTURE_2D, ch.TextureID);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -53,7 +56,8 @@ public:
     }
 
     void setFrameBuffer(float w, float h) {
-        glm::mat4 textProjection = glm::ortho(0.0f, (float)w, 0.0f, (float)h);
+        // Top-left is (0, 0) and y grows down.
+        glm::mat4 textProjection = glm::ortho(0.0f, (float)w, (float)h, 0.0f);
         shader_.use();
         shader_.setMat4("projection", textProjection);
     }
