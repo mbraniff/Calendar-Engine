@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include "app/containers/vstack.hpp"
+#include "app/graphics.hpp"
 #include "app/rendering/renderer.hpp"
 #include "app/shapes/shape.hpp"
 #include "app/shapes/shape_view.hpp"
@@ -454,12 +455,16 @@ int main() {
         subText->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue());
 
         auto vstack = std::make_shared<VStack>();
+        auto frame = vstack->frame({.maxWidth = F_INFINITY, .maxHeight = F_INFINITY});
+        vstack->padding(8);
         vstack->addSubview(text);
         vstack->addSubview(subText);
         vstack->clipShape = std::make_unique<Rectangle>();
-        vstack->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
-        mainView.addSubview(vstack);
+        auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
+        frame->background = bg;
+        mainView.addSubview(frame);
         mainView.addSubview(fps);
+        subText->padding(8);
         while (!platform->shouldClose()) {
             float currentFrame = platform->time();
             deltaTime = currentFrame - lastFrame;
