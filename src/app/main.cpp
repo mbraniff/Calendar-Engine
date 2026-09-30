@@ -9,6 +9,7 @@
 #include <string>
 #include "app/rendering/renderer.hpp"
 #include "app/shapes/shape.hpp"
+#include "app/shapes/shape_view.hpp"
 #include "app/text/text.hpp"
 #include "shader.hpp"
 #include "stb_image.h"
@@ -453,6 +454,7 @@ int main() {
         bool frameLimit = false;
         float lastFrame = 0.0f;
         float deltaTime = 0.0f;
+        text->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue().withAlpha(0.5));
         mainView.addSubview(std::move(text));
         mainView.addSubview(fps);
         while (!platform->shouldClose()) {

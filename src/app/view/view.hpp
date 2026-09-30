@@ -12,6 +12,7 @@ public:
     float opacity = 1.0f;
     Point offset;
     std::unique_ptr<Shape> clipShape;
+    std::shared_ptr<View> background;
 
     void layout(Rect frame) {
         Size want = measure({frame.width, frame.height});
@@ -25,12 +26,15 @@ public:
         frame_.width = want.width;
         frame_.height = want.height;
 
+        if (background) background->layout(frame_);
+
         layoutSubviews();
     }
 
     void render(Renderer& r) {
         if (clipShape) r.pushClip(clipShape->pathIn(frame_), clipMask_);
         r.pushOpacity(opacity);
+        if (background) background->render(r);
         drawSelf(r);
         for (auto& child : subviews_)
             child->render(r);

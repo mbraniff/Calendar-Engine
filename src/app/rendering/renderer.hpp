@@ -1,5 +1,6 @@
 #pragma once
 #include "app/GL.h"
+#include "app/rendering/shape_renderer.hpp"
 #include "app/rendering/text_renderer.hpp"
 #include "app/shapes/mask.hpp"
 #include "app/shapes/shape.hpp"
@@ -24,6 +25,22 @@ public:
         textRenderer_.draw(set, text, pos);
     }
 
+    void drawShape(const Path& path, Color color, Mask& fill) {
+        fill.update(path, nullptr);
+        if (fill.tex == 0) return;
+
+        GLuint tex = whiteTex_;
+        glm::vec4 rect(0, 0, width_, height_);
+        if (!getMask(tex, rect)) return;
+        shapeRenderer_.setMask(rect, tex);
+
+        float opacity = 1.0f;
+        for (float o : opacity_) opacity *= o;
+        shapeRenderer_.setOpacity(opacity);
+        shapeRenderer_.setColor(color);
+        shapeRenderer_.draw(fill);
+    }
+
     void pushClip(const Path& path, Mask& mask) {
         const Mask* parent = masks_.empty() ? nullptr : masks_.back();
         mask.update(path, parent);
@@ -45,12 +62,14 @@ public:
     void setFrameBuffer(float w, float h) {
         width_ = w; height_ = h;
         textRenderer_.setFrameBuffer(w, h);
+        shapeRenderer_.setFrameBuffer(w, h);
     }
 private:
     std::vector<float> opacity_;
     std::vector<Mask*> masks_;
     GLuint whiteTex_ = 0;
     TextRenderer textRenderer_;
+    ShapeRenderer shapeRenderer_;
     float width_ = 0, height_ = 0;
 
     bool getMask(GLuint& tex, glm::vec4& rect) {
