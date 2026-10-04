@@ -78,7 +78,8 @@ endif()
 # The Pi reads its touchscreen directly with libinput; GLFW has no touch API.
 if(TARGET_PROFILE STREQUAL "PI")
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBINPUT REQUIRED IMPORTED_TARGET libinput)
+    pkg_check_modules(LIBINPUT REQUIRED IMPORTED_TARGET libinput libudev)
+    target_sources(calendar PRIVATE src/platform/touch_libinput.cpp)
     target_link_libraries(calendar PRIVATE PkgConfig::LIBINPUT)
 endif()
 

@@ -4,6 +4,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "platform.h"
+#ifdef APP_PROFILE_PI
+    #include "touch_libinput.hpp"
+#endif
 
 namespace {
     class PlatformGlfw : public Platform {
@@ -60,10 +63,10 @@ namespace {
             std::printf("%s | %s\n", glGetString(GL_VERSION), glGetString(GL_RENDERER));
 
             glfwSwapInterval(1);
+            glfwSetWindowUserPointer(win_, this);
             #ifdef APP_PROFILE_DEV            
                 if (cfg.hideCursor) glfwSetInputMode(win_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-                glfwSetWindowUserPointer(win_, this);
                 glfwSetCursorPosCallback(win_, [](GLFWwindow* w, double x, double y) {
                     auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
                     if (!self->pointerDown || !self->onPointer || (self->lastMouseX == x && self->lastMouseY)) return;
@@ -84,6 +87,9 @@ namespace {
                     if (act == GLFW_PRESS && self->onKey) self->onKey(key);
                 });
             #endif
+            #ifdef APP_PROFILE_PI
+                if (!touch_.init()) std::fprintf(stderr, "Touch input unavailable\n");
+            #endif
             glfwSetFramebufferSizeCallback(win_, [](GLFWwindow* window, int w, int h) {
                 auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(window));
                 if (self->onFramebufferResize) self->onFramebufferResize(w, h);
@@ -92,7 +98,14 @@ namespace {
         }
 
         bool shouldClose() const override { return glfwWindowShouldClose(win_); }
-        void pollEvents() override { glfwPollEvents(); }
+        void pollEvents() override {
+            glfwPollEvents();
+            #ifdef APP_PROFILE_PI
+                int w, h;
+                framebufferSize(w, h);
+                touch_.poll(w, h, onPointer);
+            #endif
+        }
         void swapBuffers() override { glfwSwapBuffers(win_); }
         double time() const override { return glfwGetTime(); }
         void framebufferSize(int &w, int &h) const override {
@@ -106,6 +119,9 @@ namespace {
         #ifdef APP_PROFILE_DEV
         bool pointerDown = false;
         double lastMouseX = -1, lastMouseY = -1;
+        #endif
+        #ifdef APP_PROFILE_PI
+        LibinputTouch touch_;
         #endif
     };
 }
