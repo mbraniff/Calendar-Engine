@@ -15,5 +15,9 @@
         "clangd.arguments": ["--compile-commands-dir=${workspaceFolder}/build"]
       }
     }
+  },
+  "containerEnv": {
+    "VNC_RESOLUTION": "1440x900x24",
+    "VNC_DPI": "96"
   }
 }
