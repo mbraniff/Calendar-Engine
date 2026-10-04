@@ -60,6 +60,7 @@ add_executable(calendar
     src/app/containers/frame.cpp
     src/app/containers/hstack.cpp
     src/app/pointer_dispatch.cpp
+    src/app/button/button.cpp
 )
 target_include_directories(calendar PRIVATE src)
 target_compile_definitions(calendar PRIVATE
