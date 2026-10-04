@@ -10,6 +10,12 @@ struct PlatformConfig {
     bool hideCursor;
 };
 
+enum PointerAction {
+    Down,
+    Move,
+    Up
+};
+
 class Platform {
 public:
     virtual ~Platform() = default;
@@ -22,7 +28,7 @@ public:
     virtual bool isKeyDown(int key) = 0;
     virtual void requestClose() = 0;
 
-    std::function<void(float x, float y, bool down)> onPointer;
+    std::function<void(int channel, double x, double y, PointerAction action)> onPointer;
     std::function<void(int key)> onKey;
     std::function<void(int w, int h)> onFramebufferResize;
 };

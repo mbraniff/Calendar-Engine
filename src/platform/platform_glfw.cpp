@@ -60,19 +60,30 @@ namespace {
             std::printf("%s | %s\n", glGetString(GL_VERSION), glGetString(GL_RENDERER));
 
             glfwSwapInterval(1);
-            if (cfg.hideCursor) glfwSetInputMode(win_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+            #ifdef APP_PROFILE_DEV            
+                if (cfg.hideCursor) glfwSetInputMode(win_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-            glfwSetWindowUserPointer(win_, this);
-            glfwSetMouseButtonCallback(win_, [](GLFWwindow* w, int btn, int act, int) {
-                auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
-                if (btn != GLFW_MOUSE_BUTTON_LEFT || !self->onPointer) return;
-                double x, y; glfwGetCursorPos(w, &x, &y);
-                self->onPointer((float)x, (float)y, act == GLFW_PRESS);
-            });
-            glfwSetKeyCallback(win_, [](GLFWwindow* w, int key, int, int act, int) {
-                auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
-                if (act == GLFW_PRESS && self->onKey) self->onKey(key);
-            });
+                glfwSetWindowUserPointer(win_, this);
+                glfwSetCursorPosCallback(win_, [](GLFWwindow* w, double x, double y) {
+                    auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
+                    if (!self->pointerDown || !self->onPointer || (self->lastMouseX == x && self->lastMouseY)) return;
+                    self->onPointer(0, (float)x, (float)y, PointerAction::Move);
+                });
+                glfwSetMouseButtonCallback(win_, [](GLFWwindow* w, int btn, int act, int) {
+                    auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
+                    if (btn != GLFW_MOUSE_BUTTON_LEFT || !self->onPointer) return;
+                    double x, y; glfwGetCursorPos(w, &x, &y);
+                    if (self->pointerDown != act == GLFW_PRESS) {
+                        self->onPointer(0, (float)x, (float)y, self->pointerDown ? PointerAction::Up : PointerAction::Down);
+                    }
+                    self->pointerDown = act == GLFW_PRESS;
+                    self->lastMouseX = x; self->lastMouseY = y;
+                });
+                glfwSetKeyCallback(win_, [](GLFWwindow* w, int key, int, int act, int) {
+                    auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
+                    if (act == GLFW_PRESS && self->onKey) self->onKey(key);
+                });
+            #endif
             glfwSetFramebufferSizeCallback(win_, [](GLFWwindow* window, int w, int h) {
                 auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(window));
                 if (self->onFramebufferResize) self->onFramebufferResize(w, h);
@@ -92,6 +103,10 @@ namespace {
 
     private:
         GLFWwindow* win_ = nullptr;
+        #ifdef APP_PROFILE_DEV
+        bool pointerDown = false;
+        double lastMouseX = -1, lastMouseY = -1;
+        #endif
     };
 }
 

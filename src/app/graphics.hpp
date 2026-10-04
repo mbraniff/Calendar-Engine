@@ -19,6 +19,10 @@ struct Rect {
     float width = 0, height = 0;
 
     Point center() { return { origin.x + width / 2, origin.y + height / 2 }; }
+    bool contains(Point p) {
+        return p.x >= origin.x && p.x <= origin.x + width
+            && p.y >= origin.y && p.y <= origin.y + height;
+    }
 };
 
 struct Color {

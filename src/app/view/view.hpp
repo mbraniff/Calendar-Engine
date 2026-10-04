@@ -2,9 +2,12 @@
 #include <glm/ext/vector_float2.hpp>
 #include <memory>
 #include <vector>
+#include "app/gestures/geature.hpp"
 #include "app/graphics.hpp"
 #include "app/rendering/renderer.hpp"
 #include "app/shapes/shape.hpp"
+
+class GestureRecognizer;
 
 class View : public std::enable_shared_from_this<View> {
 public:
@@ -54,7 +57,12 @@ public:
         return Size{frame_.width, frame_.height};
     }
 
+    const Rect frame() {
+        return frame_;
+    }
+
     void addSubview(std::shared_ptr<View> view) {
+        view->parent_ = std::weak_ptr<View>(weak_from_this());
         subviews_.push_back(std::move(view));
     }
 
@@ -63,6 +71,14 @@ public:
     }
 
     std::shared_ptr<View> frame(FrameOptions options);
+    virtual std::shared_ptr<View> hitTest(Point p);
+    const std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers();
+    std::weak_ptr<View> parent();
+
+    virtual void pointerDown(int, Point) {}
+    virtual void pointerMoved(int, Point) {}
+    virtual void pointerUp(int, Point) {}
+    virtual void pointerCancelled() {}
 
 protected:
     virtual Size measure(Size proposed) { return proposed; }
@@ -82,4 +98,6 @@ protected:
     std::vector<std::shared_ptr<View>> subviews_;
     Mask clipMask_;
     Padding padding_ = Padding(0);
+    std::weak_ptr<View> parent_;
+    std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers_;
 };
