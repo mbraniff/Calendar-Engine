@@ -3,7 +3,6 @@
 #include "app/rendering/shape_renderer.hpp"
 #include "app/rendering/text_renderer.hpp"
 #include "app/shapes/mask.hpp"
-#include "app/shapes/shape.hpp"
 #include "app/text/font.hpp"
 #include <glm/fwd.hpp>
 #include <string_view>

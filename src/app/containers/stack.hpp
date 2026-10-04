@@ -1,6 +1,7 @@
 #pragma once
 #include "app/graphics.hpp"
 #include "app/view/view.hpp"
+#include <algorithm>
 #include <numeric>
 #include <vector>
 

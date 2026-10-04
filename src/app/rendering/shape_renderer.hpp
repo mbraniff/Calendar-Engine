@@ -1,7 +1,5 @@
 #pragma once
 #include "app/shapes/mask.hpp"
-#include "app/shapes/path.hpp"
-#include "app/text/font.hpp"
 #include "app/shader.hpp"
 #include "app/GL.h"
 #include "app/paths.hpp"
