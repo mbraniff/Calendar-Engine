@@ -46,11 +46,11 @@ public:
         float baseline = std::round(pos.y + set.ascender);
         for (auto& c : text) {
             auto& ch = set.chars[c];
-            auto data = glm::vec4(x + ch.Bearing.x, baseline - ch.Bearing.y, ch.Size.x, ch.Size.y);
+            auto data = glm::vec4(std::round(x + ch.Bearing.x), baseline - ch.Bearing.y, ch.Size.x, ch.Size.y);
             shader_.set4Float("rect", data);
             glBindTexture(GL_TEXTURE_2D, ch.TextureID);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            x += ch.Advance >> 6;
+            x += ch.Advance / 64.0f;
         }
         glBindVertexArray(0);
         glDisable(GL_BLEND);

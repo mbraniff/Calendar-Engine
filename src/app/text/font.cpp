@@ -71,7 +71,7 @@ Font::GlyphSet& Font::BuildGlyphSet(Font::Key key) {
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     for (unsigned char c = 32; c < 128; c++) {
-        if (FT_Load_Char(face_, c, FT_LOAD_RENDER)) {
+        if (FT_Load_Char(face_, c, FT_LOAD_RENDER | FT_LOAD_TARGET_LIGHT)) {
             std::cout << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
             continue;
         }
@@ -91,8 +91,8 @@ Font::GlyphSet& Font::BuildGlyphSet(Font::Key key) {
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         Character character = {
             texture,
