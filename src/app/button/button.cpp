@@ -26,8 +26,10 @@ void Button::pointerMoved(int channel, Point p) {
 
 void Button::pointerUp(int channel, Point p) {
     if (trackingChannel != channel) return;
+    if (isHighlighted) {
+        action_();
+    }
     pointerCancelled();
-    action_();
 }
 
 Size Button::measure(Size proposal) {
