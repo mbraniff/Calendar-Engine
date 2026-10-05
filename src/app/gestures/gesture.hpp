@@ -11,7 +11,6 @@ public:
     using Callback = std::function<void(GestureRecognizer&)>;
     enum State { Possible, Began, Changed, Ended, Cancelled, Failed, };
 
-
     const State state() { return state_; }
 
     bool isLive() const {

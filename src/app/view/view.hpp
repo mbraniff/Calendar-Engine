@@ -2,7 +2,7 @@
 #include <glm/ext/vector_float2.hpp>
 #include <memory>
 #include <vector>
-#include "app/gestures/geature.hpp"
+#include "app/gestures/gesture.hpp"
 #include "app/graphics.hpp"
 #include "app/rendering/renderer.hpp"
 #include "app/shapes/shape.hpp"
@@ -74,6 +74,9 @@ public:
     virtual std::shared_ptr<View> hitTest(Point p);
     const std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers();
     std::weak_ptr<View> parent();
+    void addGesture(std::shared_ptr<GestureRecognizer> recognizer) {
+        gestureRecognizers_.push_back(recognizer);
+    }
 
     virtual void pointerDown(int, Point) {}
     virtual void pointerMoved(int, Point) {}

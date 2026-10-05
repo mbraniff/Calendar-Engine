@@ -12,6 +12,8 @@ public:
     void pointerMove(int channel, Point p);
     void pointerUp(int channel, Point p);
 private:
+    void resetRecognizers();
+    
     void updateClaimed() {
         if (claimed_ != nullptr) return;
         for (auto& r : recognizers_) {

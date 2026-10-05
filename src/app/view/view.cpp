@@ -1,6 +1,6 @@
 #include "app/view/view.hpp"
 #include "app/containers/frame.hpp"
-#include "app/gestures/geature.hpp"
+#include "app/gestures/gesture.hpp"
 #include "app/graphics.hpp"
 #include <memory>
 #include <vector>
@@ -12,11 +12,12 @@ std::shared_ptr<View> View::frame(FrameOptions options) {
 }
 
 std::shared_ptr<View> View::hitTest(Point p) {
-    if (!frame_.contains(p)) { return nullptr; }
+    bool inside = frame_.contains(p);
+    if (clipShape && !inside) { return nullptr; }
     for (auto it = subviews_.rbegin(); it != subviews_.rend(); it++) {
         if (auto hit = (*it)->hitTest(p)) { return hit; }
     }
-    return shared_from_this();
+    return inside ? shared_from_this() : nullptr;
 }
 
 const std::vector<std::shared_ptr<GestureRecognizer>> View::gestureRecognizers() {

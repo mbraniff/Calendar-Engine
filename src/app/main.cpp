@@ -8,6 +8,8 @@
 #include "app/button/button.hpp"
 #include "app/containers/hstack.hpp"
 #include "app/containers/vstack.hpp"
+#include "app/gestures/gesture.hpp"
+#include "app/gestures/tap_gesture.hpp"
 #include "app/graphics.hpp"
 #include "app/pointer_dispatch.hpp"
 #include "app/rendering/renderer.hpp"
@@ -146,6 +148,12 @@ int main() {
         int counter = 0;
         auto counterView = std::make_shared<Text>("0");
         counterView->alignment = Alignment::bottomTrailing();
+        subText->addGesture(std::make_shared<TapGestureRecognizer>([&counter, weak = std::weak_ptr<Text>(counterView)](std::shared_ptr<GestureRecognizer> sender){
+            counter += 1;
+            if (auto t = weak.lock()) {
+                t->text = std::to_string(counter);
+            }
+        }));
 
         std::shared_ptr<Button> b = std::make_shared<Button>(text, [&counter, weak = std::weak_ptr<Text>(counterView)]() {
             counter += 1;

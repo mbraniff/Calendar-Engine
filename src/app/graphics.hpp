@@ -12,6 +12,11 @@ struct Size {
 struct Point {
     float x = 0, y = 0;
     bool operator==(const Point&) const = default;
+    float squareDistance(Point to) {
+        float xd = x - to.x;
+        float yd = y - to.y;
+        return xd * xd + yd * yd;
+    }
 };
 
 struct Rect {

@@ -48,4 +48,11 @@ void PointerDispatch::pointerUp(int channel, Point p) {
         hitView_ = nullptr;
         startChannel = -1;
     }
+    resetRecognizers();
+}
+
+void PointerDispatch::resetRecognizers() {
+    for (auto& r : recognizers_) {
+        r->reset();
+    }
 }
