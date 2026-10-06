@@ -14,11 +14,11 @@ public:
         onTap_ = onTap;
     }
 
-    void pointerDown(int, Point) override;
-    void pointerMoved(int, Point) override;
-    void pointerUp(int, Point) override;
+    void pointerDown(int, Point, double) override;
+    void pointerMoved(int, Point, double) override;
+    void pointerUp(int, Point, double) override;
 private:
     TapCallback onTap_;
-    float maxDist = 5.0f;
+    float maxDist = 10.0f;
     Point startPoint;
 };

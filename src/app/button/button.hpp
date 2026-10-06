@@ -11,9 +11,9 @@ public:
 
     Size measure(Size proposed) override;
     void pointerCancelled() override;
-    void pointerDown(int, Point) override;
-    void pointerMoved(int, Point) override;
-    void pointerUp(int, Point) override;
+    void pointerDown(int, Point, double) override;
+    void pointerMoved(int, Point, double) override;
+    void pointerUp(int, Point, double) override;
     std::shared_ptr<View> hitTest(Point p) override;
     void setAction(std::function<void()> action) {
         action_ = action;

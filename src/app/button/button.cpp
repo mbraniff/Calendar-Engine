@@ -10,7 +10,7 @@ void Button::pointerCancelled() {
     originalOpacity = 1.0f;
 }
 
-void Button::pointerDown(int channel, Point p) {
+void Button::pointerDown(int channel, Point p, double time) {
     if (trackingChannel != channel && trackingChannel != -1) return;
     isHighlighted = contentFrame().contains(p);
     trackingChannel = channel;
@@ -18,13 +18,13 @@ void Button::pointerDown(int channel, Point p) {
     subviews_.front()->opacity = isHighlighted ? originalOpacity * 0.4 : originalOpacity;
 }
 
-void Button::pointerMoved(int channel, Point p) {
+void Button::pointerMoved(int channel, Point p, double time) {
     if (trackingChannel != channel) return;
     isHighlighted = contentFrame().contains(p);
     subviews_.front()->opacity = isHighlighted ? originalOpacity * 0.4 : originalOpacity;
 }
 
-void Button::pointerUp(int channel, Point p) {
+void Button::pointerUp(int channel, Point p, double time) {
     if (trackingChannel != channel) return;
     if (isHighlighted) {
         action_();

@@ -8,6 +8,7 @@
 #include "app/button/button.hpp"
 #include "app/containers/hstack.hpp"
 #include "app/containers/vstack.hpp"
+#include "app/gestures/drag_gesture.hpp"
 #include "app/gestures/gesture.hpp"
 #include "app/gestures/tap_gesture.hpp"
 #include "app/graphics.hpp"
@@ -36,16 +37,16 @@ void processInput(Platform* platform, float deltaTime) {
     }
 }
 
-void processPointer(PointerDispatch& dispatch, int channel, float x, float y, PointerAction action) {
-    switch (action) {
+void processPointer(PointerDispatch& dispatch, PointerEvent& e) {
+    switch (e.action) {
     case PointerAction::Down:
-        dispatch.pointerDown(channel, {x, y});
+        dispatch.pointerDown(e.channel, e.p, e.time);
         break;
     case PointerAction::Move:
-        dispatch.pointerMove(channel, {x, y});
+        dispatch.pointerMove(e.channel, e.p, e.time);
         break;
     case PointerAction::Up:
-        dispatch.pointerUp(channel, {x, y});
+        dispatch.pointerUp(e.channel, e.p, e.time);
         break;
     }
 }
@@ -134,8 +135,8 @@ int main() {
             w = wi; h = he;
         };
         PointerDispatch dispatch = PointerDispatch(mainView);
-        platform->onPointer = [&](int channel, float x, float y, PointerAction action) {
-            processPointer(dispatch, channel, x, y, action);
+        platform->onPointer = [&](PointerEvent e) {
+            processPointer(dispatch, e);
         };
         text->alignment = Alignment::topCenter();
         text->padding(12, Padding::Horizontal);
@@ -163,6 +164,28 @@ int main() {
         });
         b->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color(0.8f, 0.0f, 0.8f));
         b->clipShape = std::make_unique<Capsule>();
+        std::shared_ptr<DragGestureRecognizer> dragGesture = std::make_shared<DragGestureRecognizer>();
+        dragGesture->onChange([weak = std::weak_ptr<View>(b)](DragGestureRecognizer::DragEvent event){
+            auto view = weak.lock();
+            view->offset.x += event.translation.width;
+            view->offset.y += event.translation.height;
+        }).onEnd([weak = std::weak_ptr<View>(b), &w, &h](DragGestureRecognizer::DragEvent event){
+            auto view = weak.lock();
+            if (!view) return;
+            constexpr float d = 0.99f;
+            auto project = [](float v) { return (v / 1000.0f) * d / (1.0f - d); };
+            view->offset.x += event.translation.width + project(event.velocity.width);
+            view->offset.y += event.translation.height + project(event.velocity.height);
+            // keep it on screen
+            Rect f = view->frame();
+            float dx = event.translation.width + project(event.velocity.width);
+            float dy = event.translation.height + project(event.velocity.height);
+            float newX = std::clamp(f.origin.x + dx, 0.0f, (float)w - f.width);
+            float newY = std::clamp(f.origin.y + dy, 0.0f, (float)h - f.height);
+            view->offset.x += (newX - f.origin.x) - dx;
+            view->offset.y += (newY - f.origin.y) - dy;
+        });
+        b->addGesture(dragGesture);
 
         // Debug FPS counter, averaged over half a second so it's readable.
         auto fps = std::make_shared<Text>("FPS --");

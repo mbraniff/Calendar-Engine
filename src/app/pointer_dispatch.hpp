@@ -8,12 +8,12 @@ class PointerDispatch {
 public:
     PointerDispatch(std::shared_ptr<View> rootView);
     
-    void pointerDown(int channel, Point p);
-    void pointerMove(int channel, Point p);
-    void pointerUp(int channel, Point p);
+    void pointerDown(int channel, Point p, double time);
+    void pointerMove(int channel, Point p, double time);
+    void pointerUp(int channel, Point p, double time);
 private:
     void resetRecognizers();
-    
+
     void updateClaimed() {
         if (claimed_ != nullptr) return;
         for (auto& r : recognizers_) {

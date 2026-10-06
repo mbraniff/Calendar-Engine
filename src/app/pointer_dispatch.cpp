@@ -7,7 +7,7 @@ PointerDispatch::PointerDispatch(std::shared_ptr<View> rootView) {
     root_ = rootView;
 }
 
-void PointerDispatch::pointerDown(int channel, Point p) {
+void PointerDispatch::pointerDown(int channel, Point p, double time) {
     if (startChannel == channel || startChannel == -1) {
         recognizers_.clear();
         startChannel = channel;
@@ -19,30 +19,30 @@ void PointerDispatch::pointerDown(int channel, Point p) {
         }
     }
     for(auto& r : recognizers_) {
-        r->pointerDown(channel, p);
+        r->pointerDown(channel, p, time);
     }
     updateClaimed();
-    deliver([&](View& v){ v.pointerDown(channel, p); });
+    deliver([&](View& v){ v.pointerDown(channel, p, time); });
 }
 
-void PointerDispatch::pointerMove(int channel, Point p) {
+void PointerDispatch::pointerMove(int channel, Point p, double time) {
     for(auto& r : recognizers_) {
         if (r->isLive()) {
-            r->pointerMoved(channel, p);
+            r->pointerMoved(channel, p, time);
         }
     }
     updateClaimed();
-    deliver([&](View& v){ v.pointerMoved(channel, p); });
+    deliver([&](View& v){ v.pointerMoved(channel, p, time); });
 }
 
-void PointerDispatch::pointerUp(int channel, Point p) {
+void PointerDispatch::pointerUp(int channel, Point p, double time) {
     for(auto& r : recognizers_) {
         if (r->isLive()) {
-             r->pointerUp(channel, p);
+             r->pointerUp(channel, p, time);
         }
     }
     updateClaimed();
-    deliver([&](View& v){ v.pointerUp(channel, p); });
+    deliver([&](View& v){ v.pointerUp(channel, p, time); });
     if (startChannel == channel) {
         claimed_ = nullptr;
         hitView_ = nullptr;

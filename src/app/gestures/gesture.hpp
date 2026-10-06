@@ -25,9 +25,9 @@ public:
             || state_ == Ended;
     }
 
-    virtual void pointerDown(int, Point) {}
-    virtual void pointerMoved(int, Point) {}
-    virtual void pointerUp(int, Point) {}
+    virtual void pointerDown(int, Point, double) {}
+    virtual void pointerMoved(int, Point, double) {}
+    virtual void pointerUp(int, Point, double) {}
 
     void forceStop() {
         if (state_ == Possible) state_ = Failed;
@@ -37,12 +37,12 @@ public:
     void reset() { state_ = Possible; }
     void setView(std::weak_ptr<View> view) { view_ = view; }
 
-    Callback onChange;
+    Callback onStateChange;
 protected:
     void setState(State state) {
         state_ = state;
-        if (state != Possible && state != Failed && onChange) {
-            onChange(*this);
+        if (state != Possible && state != Failed && onStateChange) {
+            onStateChange(*this);
         }
     }
     virtual void onReset() {}

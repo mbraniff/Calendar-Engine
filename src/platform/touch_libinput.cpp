@@ -52,8 +52,9 @@ void LibinputTouch::poll(int width, int height, const PointerCallback& onPointer
             int slot = libinput_event_touch_get_seat_slot(touch);
             double x = libinput_event_touch_get_x_transformed(touch, width);
             double y = libinput_event_touch_get_y_transformed(touch, height);
+            double time = libinput_event_touch_get_time_usec(touch) / 1e6;
             last_[slot] = { x, y };
-            if (onPointer) onPointer(slot, x, y, type == LIBINPUT_EVENT_TOUCH_DOWN ? PointerAction::Down : PointerAction::Move);
+            if (onPointer) onPointer({slot, { (float)x, (float)y }, type == LIBINPUT_EVENT_TOUCH_DOWN ? PointerAction::Down : PointerAction::Move, time});
             break;
         }
         case LIBINPUT_EVENT_TOUCH_UP:
@@ -62,7 +63,8 @@ void LibinputTouch::poll(int width, int height, const PointerCallback& onPointer
             int slot = libinput_event_touch_get_seat_slot(touch);
             auto it = last_.find(slot);
             if (it == last_.end()) break;
-            if (onPointer) onPointer(slot, it->second.x, it->second.y, PointerAction::Up);
+            double time = libinput_event_touch_get_time_usec(touch) / 1e6;
+            if (onPointer) onPointer({slot, { (float)it->second.x, (float)it->second.y }, PointerAction::Up, time});
             last_.erase(it);
             break;
         }

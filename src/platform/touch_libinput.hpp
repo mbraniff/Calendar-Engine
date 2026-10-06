@@ -10,7 +10,7 @@ struct udev;
 // Each finger reports on its own channel (libinput's seat slot).
 class LibinputTouch {
 public:
-    using PointerCallback = std::function<void(int channel, double x, double y, PointerAction action)>;
+    using PointerCallback = std::function<void(PointerEvent)>;
 
     LibinputTouch() = default;
     ~LibinputTouch();

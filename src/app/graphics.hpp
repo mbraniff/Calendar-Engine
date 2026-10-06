@@ -4,6 +4,12 @@
 
 inline constexpr float infinity = std::numeric_limits<float>::infinity();
 
+enum PointerAction {
+    Down,
+    Move,
+    Up
+};
+
 struct Size {
     float width = 0;
     float height = 0;
@@ -12,11 +18,18 @@ struct Size {
 struct Point {
     float x = 0, y = 0;
     bool operator==(const Point&) const = default;
-    float squareDistance(Point to) {
+    float squareDistance(const Point& to) {
         float xd = x - to.x;
         float yd = y - to.y;
         return xd * xd + yd * yd;
     }
+};
+
+struct PointerEvent {
+    int channel = -1;
+    Point p;
+    PointerAction action = Down;
+    double time = 0;
 };
 
 struct Rect {

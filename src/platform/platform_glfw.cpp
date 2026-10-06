@@ -4,6 +4,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "platform.h"
+#include "app/graphics.hpp"
 #ifdef APP_PROFILE_PI
     #include "touch_libinput.hpp"
 #endif
@@ -69,15 +70,16 @@ namespace {
 
                 glfwSetCursorPosCallback(win_, [](GLFWwindow* w, double x, double y) {
                     auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
-                    if (!self->pointerDown || !self->onPointer || (self->lastMouseX == x && self->lastMouseY)) return;
-                    self->onPointer(0, (float)x, (float)y, PointerAction::Move);
+                    if (!self->pointerDown || !self->onPointer || (self->lastMouseX == x && self->lastMouseY == y)) return;
+                    self->lastMouseX = x; self->lastMouseY = y;
+                    self->onPointer({0, { (float)x, (float)y }, PointerAction::Move, glfwGetTime()});
                 });
                 glfwSetMouseButtonCallback(win_, [](GLFWwindow* w, int btn, int act, int) {
                     auto* self = static_cast<PlatformGlfw*>(glfwGetWindowUserPointer(w));
                     if (btn != GLFW_MOUSE_BUTTON_LEFT || !self->onPointer) return;
                     double x, y; glfwGetCursorPos(w, &x, &y);
                     if (self->pointerDown != act == GLFW_PRESS) {
-                        self->onPointer(0, (float)x, (float)y, self->pointerDown ? PointerAction::Up : PointerAction::Down);
+                        self->onPointer({0, { (float)x, (float)y }, self->pointerDown ? PointerAction::Up : PointerAction::Down, glfwGetTime()});
                     }
                     self->pointerDown = act == GLFW_PRESS;
                     self->lastMouseX = x; self->lastMouseY = y;

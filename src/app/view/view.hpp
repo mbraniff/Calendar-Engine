@@ -78,9 +78,9 @@ public:
         gestureRecognizers_.push_back(recognizer);
     }
 
-    virtual void pointerDown(int, Point) {}
-    virtual void pointerMoved(int, Point) {}
-    virtual void pointerUp(int, Point) {}
+    virtual void pointerDown(int, Point, double) {}
+    virtual void pointerMoved(int, Point, double) {}
+    virtual void pointerUp(int, Point, double) {}
     virtual void pointerCancelled() {}
 
 protected:
