@@ -1,8 +1,10 @@
 #pragma once
 #include "app/text/font.hpp"
+#include "app/text_layout.hpp"
 #include "app/view/view.hpp"
 #include "app/rendering/renderer.hpp"
 #include <string>
+#include <vector>
 
 class Text: public View {
 public:
@@ -14,4 +16,6 @@ public:
     Text(std::string text);
     void drawSelf(Renderer &) override;
     Size measure(Size proposed) override;
+private:
+    std::vector<TextEntry> text_;
 };

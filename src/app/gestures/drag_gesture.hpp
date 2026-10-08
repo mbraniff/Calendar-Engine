@@ -34,8 +34,8 @@ protected:
     Size velocity() const;
 
     float slop_ = 10.0f;
-    DragCallback onChange_;
-    DragCallback onEnd_;
+    DragCallback onChange_ = [](DragEvent _){};
+    DragCallback onEnd_ = [](DragEvent _){};
     PointerEvent lastEvent_;
     Point startPoint_;
     // Recent pointer positions, used to smooth out velocity.

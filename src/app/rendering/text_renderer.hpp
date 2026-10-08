@@ -1,12 +1,13 @@
 #pragma once
-#include "app/text/font.hpp"
 #include "app/shader.hpp"
 #include "app/GL.h"
 #include "app/paths.hpp"
 #include "app/graphics.hpp"
+#include "app/text_layout.hpp"
 #include <cmath>
 #include <glm/gtc/type_ptr.hpp>
 #include <string_view>
+#include <vector>
 
 class TextRenderer {
 public:
@@ -30,7 +31,7 @@ public:
     TextRenderer(const TextRenderer&) = delete;
     TextRenderer& operator=(const TextRenderer&) = delete;
 
-    void draw(Font::GlyphSet& set, std::string_view text, Point pos) {
+    void draw(const std::vector<TextEntry>& text, Point pos, Font::GlyphSet& set) {
         shader_.use();
         shader_.setInt("coverage", 0);
         shader_.setInt("clipMask", 1);
@@ -42,16 +43,14 @@ public:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // pos is the top-left of the line; the baseline sits ascender pixels below it.
-        float x = pos.x;
-        float baseline = std::round(pos.y + set.ascender);
         for (auto& c : text) {
-            auto& ch = set.chars[c];
-            auto data = glm::vec4(std::round(x + ch.Bearing.x), baseline - ch.Bearing.y, ch.Size.x, ch.Size.y);
+            float baseline = std::round(pos.y + c.pos.y + set.ascender);
+            auto data = glm::vec4(std::round(pos.x + c.pos.x + c.ch->Bearing.x), baseline - c.ch->Bearing.y, c.ch->Size.x, c.ch->Size.y);
             shader_.set4Float("rect", data);
-            glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+            glBindTexture(GL_TEXTURE_2D, c.ch->TextureID);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            x += ch.Advance / 64.0f;
         }
+
         glBindVertexArray(0);
         glDisable(GL_BLEND);
     }

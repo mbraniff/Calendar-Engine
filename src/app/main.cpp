@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include "app/button/button.hpp"
+#include "app/containers/frame.hpp"
 #include "app/containers/hstack.hpp"
 #include "app/containers/vstack.hpp"
 #include "app/gestures/drag_gesture.hpp"
@@ -50,62 +51,6 @@ void processPointer(PointerDispatch& dispatch, PointerEvent& e) {
         break;
     }
 }
-
-// std::vector<PlacedGlyph> layoutText(std::string_view text, glm::vec2 origin, float maxWidth, float lineHeight) {
-//     std::vector<PlacedGlyph> out;
-//     float x = origin.x, y = origin.y;
-//     size_t lineStart = 0;
-//     size_t wordStart = 0;
-//     float wordStartX = x;
-
-//     for (char c : text) {
-//         if (c == '\n') {
-//             x = origin.x; y -= lineHeight;
-//             lineStart = wordStart = out.size();
-//             wordStartX = x;
-//             continue;
-//         }
-//         const Character &ch = Characters[c];
-//         float advance = ch.Advance >> 6;
-
-//         if (c == ' ') {
-//             x += advance;
-//             wordStart = out.size();
-//             wordStartX = x;
-//             continue;
-//         }
-
-//         if (x + advance - origin.x > maxWidth && wordStart > lineStart) {
-//             float shift = wordStartX - origin.x;
-//             for (size_t i = wordStart; i < out.size(); ++i) {
-//                 for (auto& v : out[i].quad) { v.pos.x -= shift; v.pos.y -= lineHeight; }
-//             }
-//             x -= shift; y -= lineHeight;
-//             lineStart = wordStart;
-//             wordStartX = origin.x;
-//         }
-
-//         glm::vec2 pos{std::round(x + ch.Bearing.x), std::round(y - (ch.Size.y - ch.Bearing.y))};
-//         out.push_back({ch.TextureID, buildQuad(pos, ch.Size)});
-//         x += advance;
-//     }
-//     return out;
-// }
-
-// void drawText(const std::vector<PlacedGlyph> glyphs, unsigned int VAO, unsigned int VBO) {
-//     std::vector<GlyphVertex> verts;
-//     verts.reserve(glyphs.size() * 6);
-//     for (auto& g : glyphs) verts.insert(verts.end(), g.quad.begin(), g.quad.end());
-
-//     glBindVertexArray(VAO);
-//     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//     glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(GlyphVertex), verts.data(), GL_DYNAMIC_DRAW);
-//     for (size_t i = 0; i < glyphs.size(); ++i) {
-//         glBindTexture(GL_TEXTURE_2D, glyphs[i].texture);
-//         glDrawArrays(GL_TRIANGLES, i*6, 6);
-//     }
-//     glBindVertexArray(0);
-// }
 
 int main() {
     #ifdef APP_PROFILE_DEV
@@ -155,6 +100,18 @@ int main() {
                 t->text = std::to_string(counter);
             }
         }));
+
+        std::shared_ptr<View> bigText = std::make_shared<Text>("Text that is too large for its frame, something that is biggy: like way too biggy");
+        ((Text*)bigText.get())->color = Color::white();
+        bigText = bigText->frame({.maxWidth=100, .maxHeight=100});
+        bigText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
+        auto btg = std::make_shared<DragGestureRecognizer>();
+        btg->onChange([weak = std::weak_ptr(bigText)](DragGestureRecognizer::DragEvent event) {
+            auto view = weak.lock();
+            ((Frame*)view.get())->options.maxWidth.value() += event.translation.width;
+            ((Frame*)view.get())->options.maxHeight.value() += event.translation.height;
+        });
+        bigText->addGesture(btg);
 
         std::shared_ptr<Button> b = std::make_shared<Button>(text, [&counter, weak = std::weak_ptr<Text>(counterView)]() {
             counter += 1;
@@ -210,6 +167,7 @@ int main() {
         vstack->padding(8);
         vstack->addSubview(b);
         vstack->addSubview(subText);
+        vstack->addSubview(bigText);
         hstack->clipShape = std::make_unique<Rectangle>();
         // auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
         // frame->background = bg;

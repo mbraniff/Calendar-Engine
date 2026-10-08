@@ -4,6 +4,7 @@
 #include "app/rendering/text_renderer.hpp"
 #include "app/shapes/mask.hpp"
 #include "app/text/font.hpp"
+#include "app/text_layout.hpp"
 #include <glm/fwd.hpp>
 #include <string_view>
 #include <vector>
@@ -12,7 +13,7 @@ class Renderer {
 public:
     Renderer() { whiteTex_ = uploadMask({255}, 1, 1); }
 
-    void drawText(Font::GlyphSet &set, const std::string_view text, Point pos, const Color &color) {
+    void drawText(const std::vector<TextEntry>& text, Font::GlyphSet& set, Point pos, const Color &color) {
         GLuint tex = whiteTex_;
         glm::vec4 rect(0, 0, width_, height_);
         if(!getMask(tex, rect)) return;
@@ -21,7 +22,7 @@ public:
         for (float o : opacity_) opacity *= o;
         textRenderer_.setOpacity(opacity);
         textRenderer_.setColor(color);
-        textRenderer_.draw(set, text, pos);
+        textRenderer_.draw(text, pos, set);
     }
 
     void drawShape(const Path& path, Color color, Mask& fill) {

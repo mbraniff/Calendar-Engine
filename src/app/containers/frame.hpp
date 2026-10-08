@@ -4,9 +4,9 @@
 
 class Frame : public View {
 public:
-    Frame(FrameOptions options) : options_(options) {}
+    FrameOptions options;
+    Frame(FrameOptions options) : options(options) {}
 protected:
     Size measure(Size proposed) override;
     void layoutSubviews() override;
-    FrameOptions options_;
 };
