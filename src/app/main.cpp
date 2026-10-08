@@ -18,6 +18,7 @@
 #include "app/shapes/shape.hpp"
 #include "app/shapes/shape_view.hpp"
 #include "app/text/text.hpp"
+#include "app//text/text_layout.hpp"
 #include "stb_image.h"
 #include "platform/platform.h"
 #include <glm/glm.hpp>
@@ -103,6 +104,7 @@ int main() {
 
         std::shared_ptr<View> bigText = std::make_shared<Text>("Text that is too large for its frame, something that is biggy: like way too biggy");
         ((Text*)bigText.get())->color = Color::white();
+        ((Text*)bigText.get())->setTextAlignment(TextAlignment::Right);
         bigText = bigText->frame({.maxWidth=100, .maxHeight=100});
         bigText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
         auto btg = std::make_shared<DragGestureRecognizer>();

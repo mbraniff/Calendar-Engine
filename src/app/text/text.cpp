@@ -1,6 +1,5 @@
 #include "app/text/text.hpp"
-#include "app/text_layout.hpp"
-#include <algorithm>
+#include "app/text/text_layout.hpp"
 #include <cmath>
 #include <cstddef>
 #include <string>
@@ -90,5 +89,24 @@ Size Text::measure(Size proposal) {
 
     float width = 0;
     for (auto& e : text_) width = std::max(width, e.pos.x + e.ch->Bearing.x + e.ch->Size.x);
-    return { std::ceil(width), text_.empty() ? 0 : y + set.lineHeight };
+    width = std::ceil(width);
+
+    for (size_t start = 0; start < text_.size();) {
+        size_t end = start;
+        while (end < text_.size() && text_[end].pos.y == text_[start].pos.y) end++;
+
+        const TextEntry& last = text_[end - 1];
+        float lineWidth = last.pos.x + last.ch->Bearing.x + last.ch->Size.x;
+        // Whole pixels, so glyphs don't land on half-pixels and blur.
+        float shift = std::floor((width - lineWidth) * alignmentFactor(textAlignment_));
+        for (size_t i = start; i < end; i++) text_[i].pos.x += shift;
+
+        start = end;
+    }
+
+    return { width, text_.empty() ? 0 : y + set.lineHeight };
+}
+
+void Text::setTextAlignment(TextAlignment alignment) {
+    textAlignment_ = alignment;
 }

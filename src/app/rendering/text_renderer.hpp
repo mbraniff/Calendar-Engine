@@ -3,7 +3,7 @@
 #include "app/GL.h"
 #include "app/paths.hpp"
 #include "app/graphics.hpp"
-#include "app/text_layout.hpp"
+#include "app/text/text_layout.hpp"
 #include <cmath>
 #include <glm/gtc/type_ptr.hpp>
 #include <string_view>

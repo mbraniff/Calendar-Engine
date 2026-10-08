@@ -4,7 +4,7 @@
 #include "app/rendering/text_renderer.hpp"
 #include "app/shapes/mask.hpp"
 #include "app/text/font.hpp"
-#include "app/text_layout.hpp"
+#include "app/text/text_layout.hpp"
 #include <glm/fwd.hpp>
 #include <string_view>
 #include <vector>
