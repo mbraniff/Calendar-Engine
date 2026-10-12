@@ -2,6 +2,7 @@
 #include <glm/ext/vector_float2.hpp>
 #include <memory>
 #include <vector>
+#include "app/animation/animatable.hpp"
 #include "app/gestures/gesture.hpp"
 #include "app/graphics.hpp"
 #include "app/rendering/renderer.hpp"
@@ -12,7 +13,7 @@ class GestureRecognizer;
 class View : public std::enable_shared_from_this<View> {
 public:
     Alignment alignment = Alignment::center();
-    float opacity = 1.0f;
+    Animation::Animatable<float> opacity = 1.0f;
     Point offset;
     std::unique_ptr<Shape> clipShape;
     std::shared_ptr<View> background;

@@ -5,6 +5,8 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <string>
+#include "app/animation/animator.hpp"
+#include "app/animation/motion.hpp"
 #include "app/button/button.hpp"
 #include "app/containers/frame.hpp"
 #include "app/containers/hstack.hpp"
@@ -182,6 +184,11 @@ int main() {
         mainView->addSubview(counterView);
         subText->padding(8);
         float dirx = 1, diry = 1;
+
+        animate<float>(Animation::autoreverse<float>(Animation::linear<float>(0.3), 0), [&] {
+            subText->opacity = 0.5f;
+        });
+
         while (!platform->shouldClose()) {
             float currentFrame = platform->time();
             deltaTime = currentFrame - lastFrame;
@@ -207,6 +214,7 @@ int main() {
                 fpsElapsed = 0.0f;
             }
 
+            Animator::shared().tick(deltaTime);
             mainView->layout({{0, 0 }, (float)w, (float)h});
             mainView->render(renderer);
 
