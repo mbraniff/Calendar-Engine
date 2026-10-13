@@ -20,8 +20,8 @@ private:
     std::unordered_set<Animation::AnimatableBase*> animations_;
 };
 
-template <typename T, typename F>
+template <typename F>
 static void animate(typename Animation::MotionFactory make, F&& changes) {
-    auto tx = Animation::Transaction<T>(make);
+    auto tx = Animation::Transaction(make);
     changes();
 }

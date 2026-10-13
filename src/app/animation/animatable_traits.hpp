@@ -1,5 +1,6 @@
 #pragma once
 #include "app/graphics.hpp"
+#include "app/text/text_layout.hpp"
 
 template <typename T> struct AnimatableTraits;
 

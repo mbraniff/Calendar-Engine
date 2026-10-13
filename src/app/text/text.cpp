@@ -98,7 +98,7 @@ Size Text::measure(Size proposal) {
         const TextEntry& last = text_[end - 1];
         float lineWidth = last.pos.x + last.ch->Bearing.x + last.ch->Size.x;
         // Whole pixels, so glyphs don't land on half-pixels and blur.
-        float shift = std::floor((width - lineWidth) * alignmentFactor(textAlignment_));
+        float shift = std::floor((width - lineWidth) * alignmentFactor_);
         for (size_t i = start; i < end; i++) text_[i].pos.x += shift;
 
         start = end;
@@ -108,5 +108,15 @@ Size Text::measure(Size proposal) {
 }
 
 void Text::setTextAlignment(TextAlignment alignment) {
-    textAlignment_ = alignment;
+    alignmentFactor_ = alignmentFactor(alignment);
+}
+
+TextAlignment Text::getTextAlignment() {
+    auto target = alignmentFactor_.target();
+    if (target < 0.5f) {
+        return TextAlignment::Left;
+    } else if (target < 1.0f) {
+        return TextAlignment::Centered;
+    }
+    return TextAlignment::Right;
 }

@@ -106,10 +106,10 @@ int main() {
             }
         }));
 
-        std::shared_ptr<View> bigText = std::make_shared<Text>("Text that is too large for its frame, something that is biggy: like way too biggy");
-        ((Text*)bigText.get())->color = Color::white();
-        ((Text*)bigText.get())->setTextAlignment(TextAlignment::Right);
-        bigText = bigText->frame({.maxWidth=100, .maxHeight=100});
+        std::shared_ptr<Text> bigTextLabel = std::make_shared<Text>("Text that is too large for its frame, something that is biggy: like way too biggy");
+        bigTextLabel->color = Color::white();
+        bigTextLabel->setTextAlignment(TextAlignment::Right);
+        auto bigText = bigTextLabel->frame({.maxWidth=100, .maxHeight=100});
         bigText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
         auto btg = std::make_shared<DragGestureRecognizer>();
         btg->onChange([weak = std::weak_ptr(bigText)](DragGestureRecognizer::DragEvent event) {
@@ -148,7 +148,8 @@ int main() {
             float y = std::clamp(anchor.y + offset.y + event.translation.height + project(event.velocity.height),
                                 0.0f, (float)h - s.height);
 
-            animate<Point>(Animation::easeIn(0.15f), [&] {
+            animate(Animation::spring(), [&] {
+                view->offset.setVelocity({ event.velocity.width, event.velocity.height });
                 view->offset = { x - anchor.x, y - anchor.y };
             });
         });
@@ -174,10 +175,30 @@ int main() {
         auto vstack = std::make_shared<VStack>();
         auto hstack = std::make_shared<HStack>(0);
         auto frame = vstack->frame({.maxHeight = infinity});
+        auto swapAlignment = std::make_shared<Button>(std::make_shared<Text>("Swap"), [weak = std::weak_ptr(bigTextLabel)]{
+            animate(Animation::spring(), [&]{
+                auto view = weak.lock();
+                if (!view) return;
+                auto text = static_cast<Text*>(view.get());
+                switch (text->getTextAlignment()) {
+                case TextAlignment::Left:
+                    text->setTextAlignment(TextAlignment::Centered);
+                    break;
+                case TextAlignment::Centered:
+                    text->setTextAlignment(TextAlignment::Right);
+                    break;
+                case TextAlignment::Right:
+                    text->setTextAlignment(TextAlignment::Left);
+                    break;
+                }
+            });
+        });
         vstack->padding(8);
         vstack->addSubview(b);
         vstack->addSubview(subText);
         vstack->addSubview(bigText);
+        vstack->addSubview(swapAlignment);
+
         hstack->clipShape = std::make_unique<Rectangle>();
         // auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
         // frame->background = bg;
@@ -191,7 +212,7 @@ int main() {
         subText->padding(8);
         float dirx = 1, diry = 1;
 
-        animate<float>(Animation::autoreverse(Animation::linear(1.0f), 0), [&] {
+        animate(Animation::autoreverse(Animation::linear(1.0f), 0), [&] {
             subText->background->opacity = 0.2f;
         });
 

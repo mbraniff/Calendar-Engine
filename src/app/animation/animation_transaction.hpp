@@ -6,7 +6,6 @@
 
 namespace Animation {
     using MotionFactory = std::function<std::unique_ptr<Motion>()>;
-    template <typename T>
     class Transaction {
     public:
         Transaction(MotionFactory make) : make_(std::move(make)), previous_(current_) {

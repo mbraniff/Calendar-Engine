@@ -25,7 +25,7 @@ namespace Animation {
         ~Animatable() { Animator::shared().remove(this); }
         Animatable& operator =(T v) {
             Tr::split(v, model_.data());
-            if (auto tx = Transaction<T>::current()) {
+            if (auto tx = Transaction::current()) {
                 for (auto& m : motions_) m = tx->makeMotion();
                 Animator::shared().add(this);
             } else {
@@ -40,6 +40,11 @@ namespace Animation {
             T v = Tr::join(model_.data());
             change(v);
             return *this = v;
+        }
+
+        Animatable& setVelocity(T v) {
+            Tr::split(v, velocity_.data());
+            return *this;
         }
 
         const T target() const {

@@ -1,4 +1,5 @@
 #pragma once
+#include "app/animation/animatable.hpp"
 #include "app/text/font.hpp"
 #include "app/text/text_layout.hpp"
 #include "app/view/view.hpp"
@@ -12,12 +13,13 @@ public:
     Font::Weight fontWeight = Font::Weight::Regular;
     Font& font = Font::Default();
     std::string text;
-    Color color;
+    Animation::Animatable<Color> color;
     Text(std::string text);
     void drawSelf(Renderer &) override;
     Size measure(Size proposed) override;
     void setTextAlignment(TextAlignment alignment);
+    TextAlignment getTextAlignment();
 private:
     std::vector<TextEntry> text_;
-    TextAlignment textAlignment_ = TextAlignment::Left;
+    Animation::Animatable<float> alignmentFactor_ = alignmentFactor(TextAlignment::Left);
 };

@@ -8,7 +8,7 @@
 void Button::pointerCancelled() {
     isHighlighted = false;
     trackingChannel = -1;
-    animate<float>(Animation::easeIn(), [&]{
+    animate(Animation::easeIn(), [&]{
         subviews_.front()->opacity = originalOpacity;
     });
     originalOpacity = 1.0f;
@@ -27,7 +27,7 @@ void Button::pointerMoved(int channel, Point p, double time) {
     bool inside = contentFrame().contains(p);
     if (isHighlighted == inside) return;
     isHighlighted = inside;
-    animate<float>(Animation::easeIn(), [&]{
+    animate(Animation::easeIn(), [&]{
         subviews_.front()->opacity = isHighlighted ? originalOpacity * 0.4 : originalOpacity;
     });
 }
