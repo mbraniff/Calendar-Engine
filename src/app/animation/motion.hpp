@@ -3,44 +3,42 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+
 namespace Animation {
-    template <typename T>
     struct Motion {
     public:
         virtual ~Motion() = default;
-        virtual bool step(float dt, T& value, T& velocity, T target) = 0;
+        virtual bool step(float dt, float& value, float& velocity, float target) = 0;
     };
 
-    template <typename T>
-    struct Linear : Motion<T> {
+    struct Linear : Motion {
         float time_ = 0.3f, elapsed_ = 0.0f;
         bool started_ = false;
-        T start_;
+        float start_;
     public:
         Linear(float time = 0.3f) : time_(time) {}
 
-        bool step(float dt, T& value, T& velocity, T target) override {
+        bool step(float dt, float& value, float& velocity, float target) override {
             if (!started_) { started_ = true; start_ = value; }
             elapsed_ += dt;
             float t = std::min(elapsed_ / time_, 1.0f);
-            T next = start_ + (target - start_) * t;
-            velocity = dt > 0 ? (next - value) / dt : T{};
+            float next = start_ + (target - start_) * t;
+            velocity = dt > 0 ? (next - value) / dt : float{};
             value = next;
             return t < 1.0f;
         }
     };
 
-      template <typename T>
-  struct AutoReverse : Motion<T> {
-      using Factory = std::function<std::unique_ptr<Motion<T>>()>;
+    struct AutoReverse : Motion {
+      using Factory = std::function<std::unique_ptr<Motion>()>;
 
       // cycles: number of there-and-back trips; 0 = forever.
       AutoReverse(Factory make, int cycles = 1) : make_(std::move(make)), remaining_(cycles) {}
 
-      bool step(float dt, T& value, T& velocity, T target) override {
+      bool step(float dt, float& value, float& velocity, float target) override {
           if (!inner_) { origin_ = value; inner_ = make_(); }
 
-          T goal = forward_ ? target : origin_;
+          float goal = forward_ ? target : origin_;
           if (inner_->step(dt, value, velocity, goal)) return true;
 
           // This leg finished. Coming back completes a cycle.
@@ -52,19 +50,41 @@ namespace Animation {
 
   private:
       Factory make_;
-      std::unique_ptr<Motion<T>> inner_;
-      T origin_{};
+      std::unique_ptr<Motion> inner_;
+      float origin_{};
       bool forward_ = true;
       int remaining_;
   };
 
-  template <typename T>
+  struct EaseIn : Motion {
+    float time_ = 0.3f, elapsed = 0.0f;
+    bool started_ = false;
+    float start_;
+
+    EaseIn(float duration) : time_(duration) {}
+
+    bool step(float dt, float &value, float &velocity, float target) override {
+        if (!started_) { started_ = true; start_ = value; }
+        elapsed += dt;
+        float t = std::min(elapsed / time_, 1.0f);
+        t *= t;
+        float next = start_ + (target - start_) * t;
+        velocity = dt  > 0 ? (next - value) / dt : float{};
+        value = next;
+        return t < 1.0f;
+    }
+  };
+
   static constexpr auto linear(float duration = 0.3f) {
-    return [=] { return std::make_unique<Linear<T>>(duration); };
+    return [=] { return std::make_unique<Linear>(duration); };
   }
 
-  template <typename T, typename F>
+  template <typename F>
   static constexpr auto autoreverse(F&& make, int count = 0) {
-    return [=] { return std::make_unique<AutoReverse<T>>(make, count); };
+    return [=] { return std::make_unique<AutoReverse>(make, count); };
+  }
+
+  static constexpr auto easeIn(float duration = 0.3f) {
+    return [=] { return std::make_unique<EaseIn>(duration); };
   }
 }

@@ -14,7 +14,7 @@ class View : public std::enable_shared_from_this<View> {
 public:
     Alignment alignment = Alignment::center();
     Animation::Animatable<float> opacity = 1.0f;
-    Point offset;
+    Animation::Animatable<Point> offset;
     std::unique_ptr<Shape> clipShape;
     std::shared_ptr<View> background;
 
@@ -31,10 +31,14 @@ public:
         want.width = std::min(want.width, frame.width);
         want.height = std::min(want.height, frame.height);
 
-        frame_.origin = {
-            frame.origin.x + (frame.width - want.width) * alignment.x + offset.x,
-            frame.origin.y + (frame.height - want.height) * alignment.y + offset.y,
+        anchor_ = {
+            frame.origin.x + (frame.width - want.width) * alignment.x,
+            frame.origin.y + (frame.height - want.height) * alignment.y,
         };
+        Point offset = this->offset;
+        frame_.origin = { anchor_.x + offset.x, anchor_.y + offset.y };
+
+
         frame_.width = want.width;
         frame_.height = want.height;
 
@@ -61,6 +65,8 @@ public:
     const Rect frame() {
         return frame_;
     }
+
+    Point anchor() const { return anchor_; }
 
     void addSubview(std::shared_ptr<View> view) {
         view->parent_ = std::weak_ptr<View>(weak_from_this());
@@ -103,5 +109,6 @@ protected:
     Mask clipMask_;
     Padding padding_ = Padding(0);
     std::weak_ptr<View> parent_;
+    Point anchor_;
     std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers_;
 };

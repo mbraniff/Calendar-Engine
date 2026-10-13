@@ -91,7 +91,9 @@ int main() {
         text->padding(8, Padding::Vertical);
         auto subText = std::make_shared<Text>("This is some text under the original text");
         subText->alignment = Alignment::centerLeading();
-        subText->offset.x = -100.0f;
+        subText->offset.update([](Point& p) {
+            p.x = -100.0f; 
+        });
         subText->color = Color::red();
         subText->fontWeight = Font::Weight::Heavy;
         int counter = 0;
@@ -128,23 +130,27 @@ int main() {
         std::shared_ptr<DragGestureRecognizer> dragGesture = std::make_shared<DragGestureRecognizer>();
         dragGesture->onChange([weak = std::weak_ptr<View>(b)](DragGestureRecognizer::DragEvent event){
             auto view = weak.lock();
-            view->offset.x += event.translation.width;
-            view->offset.y += event.translation.height;
-        }).onEnd([weak = std::weak_ptr<View>(b), &w, &h](DragGestureRecognizer::DragEvent event){
+            Point offset = view->offset;
+            view->offset = { offset.x + event.translation.width, offset.y + event.translation.height };
+        }).onEnd([weak = std::weak_ptr<View>(b), &w, &h](DragGestureRecognizer::DragEvent event) {
             auto view = weak.lock();
             if (!view) return;
+
             constexpr float d = 0.99f;
             auto project = [](float v) { return (v / 1000.0f) * d / (1.0f - d); };
-            view->offset.x += event.translation.width + project(event.velocity.width);
-            view->offset.y += event.translation.height + project(event.velocity.height);
-            // keep it on screen
-            Rect f = view->frame();
-            float dx = event.translation.width + project(event.velocity.width);
-            float dy = event.translation.height + project(event.velocity.height);
-            float newX = std::clamp(f.origin.x + dx, 0.0f, (float)w - f.width);
-            float newY = std::clamp(f.origin.y + dy, 0.0f, (float)h - f.height);
-            view->offset.x += (newX - f.origin.x) - dx;
-            view->offset.y += (newY - f.origin.y) - dy;
+
+            Point anchor = view->anchor();
+            Point offset = view->offset;   // current, including this poll's moves
+            Size s = view->size();
+
+            float x = std::clamp(anchor.x + offset.x + event.translation.width + project(event.velocity.width),
+                                0.0f, (float)w - s.width);
+            float y = std::clamp(anchor.y + offset.y + event.translation.height + project(event.velocity.height),
+                                0.0f, (float)h - s.height);
+
+            animate<Point>(Animation::easeIn(0.15f), [&] {
+                view->offset = { x - anchor.x, y - anchor.y };
+            });
         });
         b->addGesture(dragGesture);
 
@@ -163,7 +169,7 @@ int main() {
         bool frameLimit = false;
         float lastFrame = 0.0f;
         float deltaTime = 0.0f;
-        subText->background = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::blue());
+        subText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
 
         auto vstack = std::make_shared<VStack>();
         auto hstack = std::make_shared<HStack>(0);
@@ -185,8 +191,8 @@ int main() {
         subText->padding(8);
         float dirx = 1, diry = 1;
 
-        animate<float>(Animation::autoreverse<float>(Animation::linear<float>(0.3), 0), [&] {
-            subText->opacity = 0.5f;
+        animate<float>(Animation::autoreverse(Animation::linear(1.0f), 0), [&] {
+            subText->background->opacity = 0.2f;
         });
 
         while (!platform->shouldClose()) {
@@ -198,8 +204,10 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             float speed = 25.0f;
-            subText->offset.x += dirx * speed * deltaTime;
-            subText->offset.y += diry * speed * deltaTime;
+            subText->offset.update([&](Point& p) {
+                p.x += dirx * speed * deltaTime;
+                p.y += diry * speed * deltaTime;
+            });
             Rect f = subText->frame();
             if (f.origin.y + f.height >= h) diry = -1;
             if (f.origin.y <= 0)            diry =  1;

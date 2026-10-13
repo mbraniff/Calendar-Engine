@@ -21,7 +21,7 @@ private:
 };
 
 template <typename T, typename F>
-static void animate(typename Animation::Transaction<T>::MotionFactory make, F&& changes) {
+static void animate(typename Animation::MotionFactory make, F&& changes) {
     auto tx = Animation::Transaction<T>(make);
     changes();
 }

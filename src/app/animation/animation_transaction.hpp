@@ -5,10 +5,10 @@
 #include <utility>
 
 namespace Animation {
+    using MotionFactory = std::function<std::unique_ptr<Motion>()>;
     template <typename T>
     class Transaction {
     public:
-        using MotionFactory = std::function<std::unique_ptr<Motion<T>>()>;
         Transaction(MotionFactory make) : make_(std::move(make)), previous_(current_) {
             current_ = this;
         };
@@ -17,7 +17,7 @@ namespace Animation {
         Transaction(const Transaction&) = delete;
 
         static Transaction* current() { return current_; }
-        std::unique_ptr<Motion<T>> makeMotion() const { return make_(); }
+        std::unique_ptr<Motion> makeMotion() const { return make_(); }
 
     private:
         MotionFactory make_;
