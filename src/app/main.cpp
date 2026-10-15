@@ -104,6 +104,7 @@ int main() {
             counter += 1;
             if (auto t = weak.lock()) {
                 t->text = std::to_string(counter);
+                t->setNeedsLayout();
             }
         }));
 
@@ -117,15 +118,67 @@ int main() {
             auto view = weak.lock();
             ((Frame*)view.get())->options.maxWidth.value() += event.translation.width;
             ((Frame*)view.get())->options.maxHeight.value() += event.translation.height;
+            view->setNeedsLayout();
         });
         bigText->addGesture(btg);
 
-        std::shared_ptr<Button> b = std::make_shared<Button>(text, [&counter, weak = std::weak_ptr<Text>(counterView)]() {
-            counter += 1;
-            if (auto t = weak.lock()) {
-                t->text = std::to_string(counter);
-            }
+        // Debug FPS counter, averaged over half a second so it's readable.
+        auto fps = std::make_shared<Text>("FPS --");
+        fps->alignment = Alignment::topTrailing();
+        fps->offset = { -8.0f, 8.0f };
+        fps->color = Color::green();
+        int fpsFrames = 0;
+        float fpsElapsed = 0.0f;
+
+        int maxFrames = 60;
+        using clock = std::chrono::steady_clock;
+        const auto frameBudget = std::chrono::microseconds(1'000'000 / maxFrames);
+        auto nextFrame = clock::now();
+        bool frameLimit = false;
+        float lastFrame = 0.0f;
+        float deltaTime = 0.0f;
+        subText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
+
+        auto containerHStack = std::make_shared<HStack>();
+        auto scrollView = std::make_shared<ScrollView>();
+        scrollView->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(20.0f), Color::black().withAlpha(0.75f));
+        auto scrollViewFrame = scrollView->frame({ .width = 300, .height = 500 });
+        auto vstack = std::make_shared<VStack>();
+        auto hstack = std::make_shared<HStack>(0);
+        auto frame = vstack->frame({.maxHeight = infinity});
+        auto swapAlignment = std::make_shared<Button>(std::make_shared<Text>("Swap"), [weak = std::weak_ptr(bigTextLabel)]{
+            animate(Animation::spring(), [&]{
+                auto view = weak.lock();
+                if (!view) return;
+                auto text = static_cast<Text*>(view.get());
+                switch (text->getTextAlignment()) {
+                case TextAlignment::Left:
+                    text->setTextAlignment(TextAlignment::Centered);
+                    break;
+                case TextAlignment::Centered:
+                    text->setTextAlignment(TextAlignment::Right);
+                    break;
+                case TextAlignment::Right:
+                    text->setTextAlignment(TextAlignment::Left);
+                    break;
+                }
+                view->setNeedsLayout();
+            });
         });
+
+        auto scrollVStack = std::make_shared<VStack>();
+        scrollView->addSubview(scrollVStack);
+
+        std::shared_ptr<Button> b = std::make_shared<Button>(std::make_shared<Text>("Add To ScrollView"), [weak = std::weak_ptr(scrollVStack)]() {
+            auto view = weak.lock();
+            if (!view) return;
+            auto text = std::make_shared<Text>("This is some text yippee yippee doo, this is some text, won't you let me coo! I will go dance and eat the breakfast!");
+            text->fontSize = 72;
+            text->fontWeight = Font::Weight::Heavy;
+            text->color = Color::white();
+            view->addSubview(text);
+        });
+        b->padding(8);
         b->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color(0.8f, 0.0f, 0.8f));
         b->clipShape = std::make_unique<Capsule>();
         std::shared_ptr<DragGestureRecognizer> dragGesture = std::make_shared<DragGestureRecognizer>();
@@ -155,48 +208,6 @@ int main() {
         });
         b->addGesture(dragGesture);
 
-        // Debug FPS counter, averaged over half a second so it's readable.
-        auto fps = std::make_shared<Text>("FPS --");
-        fps->alignment = Alignment::topTrailing();
-        fps->offset = { -8.0f, 8.0f };
-        fps->color = Color::green();
-        int fpsFrames = 0;
-        float fpsElapsed = 0.0f;
-
-        int maxFrames = 60;
-        using clock = std::chrono::steady_clock;
-        const auto frameBudget = std::chrono::microseconds(1'000'000 / maxFrames);
-        auto nextFrame = clock::now();
-        bool frameLimit = false;
-        float lastFrame = 0.0f;
-        float deltaTime = 0.0f;
-        subText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
-
-        auto containerHStack = std::make_shared<HStack>();
-        auto scrollView = std::make_shared<ScrollView>();
-        scrollView->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(20.0f), Color::black().withAlpha(0.75f));
-        auto scrollViewFrame = scrollView->frame({ .width = 300, .height = 750 });
-        auto vstack = std::make_shared<VStack>();
-        auto hstack = std::make_shared<HStack>(0);
-        auto frame = vstack->frame({.maxHeight = infinity});
-        auto swapAlignment = std::make_shared<Button>(std::make_shared<Text>("Swap"), [weak = std::weak_ptr(bigTextLabel)]{
-            animate(Animation::spring(), [&]{
-                auto view = weak.lock();
-                if (!view) return;
-                auto text = static_cast<Text*>(view.get());
-                switch (text->getTextAlignment()) {
-                case TextAlignment::Left:
-                    text->setTextAlignment(TextAlignment::Centered);
-                    break;
-                case TextAlignment::Centered:
-                    text->setTextAlignment(TextAlignment::Right);
-                    break;
-                case TextAlignment::Right:
-                    text->setTextAlignment(TextAlignment::Left);
-                    break;
-                }
-            });
-        });
         vstack->padding(8);
         vstack->addSubview(b);
         vstack->addSubview(subText);
@@ -205,15 +216,6 @@ int main() {
 
         containerHStack->addSubview(frame);
         containerHStack->addSubview(scrollViewFrame);
-        auto scrollVStack = std::make_shared<VStack>();
-        for (int i=0; i<200; i++) {
-            auto text = std::make_shared<Text>("This is some text yippee yippee doo, this is some text, won't you let me coo! I will go dance and eat the breakfast!");
-            text->fontSize = 72;
-            text->fontWeight = Font::Weight::Heavy;
-            text->color = Color::white();
-            scrollVStack->addSubview(text);
-        }
-        scrollView->addSubview(scrollVStack);
 
         hstack->clipShape = std::make_unique<Rectangle>();
         // auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
@@ -245,7 +247,9 @@ int main() {
                 p.x += dirx * speed * deltaTime;
                 p.y += diry * speed * deltaTime;
             });
+            // The frame is where layout put it; the bounce moves it with the offset on top.
             Rect f = subText->frame();
+            f.origin = subText->anchor() + subText->offset;
             if (f.origin.y + f.height >= h) diry = -1;
             if (f.origin.y <= 0)            diry =  1;
             if (f.origin.x + f.width >= w)  dirx = -1;

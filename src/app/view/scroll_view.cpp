@@ -52,3 +52,9 @@ void ScrollView::addSubview(std::shared_ptr<View> view) {
     if (subviews_.empty()) View::addSubview(container_);
     container_->addSubview(view);
 }
+
+void ScrollView::pointerDown(int channel, Point p, double time) {
+    container_->offset.setVelocity({0, 0} );
+    Point pos = container_->offset;
+    container_->offset = pos;
+}

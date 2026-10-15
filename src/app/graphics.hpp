@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <limits>
 #include <optional>
 
@@ -27,12 +28,17 @@ struct Point {
     Point operator-(const Point& r) const {
         return { x - r.x, y - r.y };
     }
+
+    Point operator+(const Point& r) const {
+        return { x + r.x, y + r.y };
+    }
 };
 
 struct Proposal {
     Point origin;
     std::optional<float> width;
     std::optional<float> height;
+    bool operator==(const Proposal&) const = default;
 };
 
 struct PointerEvent {
@@ -104,4 +110,26 @@ struct FrameOptions {
     std::optional<float> width, height;
     std::optional<float> minWidth, maxWidth, minHeight, maxHeight;
     Alignment alignment = Alignment::center();
+};
+
+template <typename T>
+struct Observed {
+public:
+    Observed& operator=(const T& v) {
+        if (value != v) {
+            value = v;
+            if (onChange_.has_value()) {
+                onChange_.value()();
+            }
+        }
+        return *this;
+    }
+    operator T() const { return value; }
+
+    void onChange(std::function<void()> onChange) {
+        onChange_ = onChange;
+    }
+private:
+    T value;
+    std::optional<std::function<void()>> onChange_;
 };

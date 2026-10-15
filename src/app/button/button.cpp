@@ -17,7 +17,7 @@ void Button::pointerCancelled() {
 
 void Button::pointerDown(int channel, Point p, double time) {
     if (trackingChannel != channel && trackingChannel != -1) return;
-    isHighlighted = contentFrame().contains(p);
+    isHighlighted = contentFrame().contains(fromScreen(p));
     trackingChannel = channel;
     originalOpacity = subviews_.front()->opacity.target();
     subviews_.front()->opacity = isHighlighted ? originalOpacity * 0.4 : originalOpacity;
@@ -25,7 +25,7 @@ void Button::pointerDown(int channel, Point p, double time) {
 
 void Button::pointerMoved(int channel, Point p, double time) {
     if (trackingChannel != channel) return;
-    bool inside = contentFrame().contains(p);
+    bool inside = contentFrame().contains(fromScreen(p));
     if (isHighlighted == inside) return;
     isHighlighted = inside;
     animate(Animation::timed(Animation::Easing::EaseIn), [&]{
@@ -46,5 +46,5 @@ Size Button::measure(std::optional<float> w, std::optional<float> h) {
 }
 
 std::shared_ptr<View> Button::hitTest(Point p) {
-    return frame_.contains(p) ? shared_from_this() : nullptr;
+    return frame_.contains(p - offset) ? shared_from_this() : nullptr;
 }

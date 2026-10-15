@@ -30,7 +30,7 @@ public:
     ShapeRenderer(const ShapeRenderer&) = delete;
     ShapeRenderer& operator=(const ShapeRenderer&) = delete;
 
-    void draw(Mask& coverage) {
+    void draw(Mask& coverage, Point offset) {
         shader_.use();
         shader_.setInt("coverage", 0);
         shader_.setInt("clipMask", 1);
@@ -41,7 +41,7 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        shader_.set4Float("rect", glm::vec4(coverage.x0, coverage.y0, coverage.w, coverage.h));
+        shader_.set4Float("rect", glm::vec4(coverage.x0 + offset.x, coverage.y0 + offset.y, coverage.w, coverage.h));
         glBindTexture(GL_TEXTURE_2D, coverage.tex);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

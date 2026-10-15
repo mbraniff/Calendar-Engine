@@ -5,8 +5,9 @@
 #include "app/shapes/mask.hpp"
 #include "app/text/font.hpp"
 #include "app/text/text_layout.hpp"
+#include <cmath>
 #include <glm/fwd.hpp>
-#include <string_view>
+#include <utility>
 #include <vector>
 
 class Renderer {
@@ -16,13 +17,14 @@ public:
     void drawText(const std::vector<TextEntry>& text, Font::GlyphSet& set, Point pos, const Color &color) {
         GLuint tex = whiteTex_;
         glm::vec4 rect(0, 0, width_, height_);
+        const auto o = offset();
         if(!getMask(tex, rect)) return;
         textRenderer_.setMask(rect, tex);
         float opacity = 1.0f;
         for (float o : opacity_) opacity *= o;
         textRenderer_.setOpacity(opacity);
         textRenderer_.setColor(color);
-        textRenderer_.draw(text, pos, set);
+        textRenderer_.draw(text, pos + o, set);
     }
 
     void drawShape(const Path& path, Color color, Mask& fill) {
@@ -38,13 +40,15 @@ public:
         for (float o : opacity_) opacity *= o;
         shapeRenderer_.setOpacity(opacity);
         shapeRenderer_.setColor(color);
-        shapeRenderer_.draw(fill);
+        // Whole pixels: the coverage texture is sampled nearest, so a fractional shift would shimmer.
+        Point o = offset();
+        shapeRenderer_.draw(fill, { std::round(o.x), std::round(o.y) });
     }
 
     void pushClip(const Path& path, Mask& mask) {
-        const Mask* parent = masks_.empty() ? nullptr : masks_.back();
+        const Mask* parent = masks_.empty() ? nullptr : masks_.back().first;
         mask.update(path, parent);
-        masks_.push_back(&mask);
+        masks_.push_back({ &mask, offset() });
     }
 
     void popClip() {
@@ -59,25 +63,54 @@ public:
         opacity_.pop_back();
     }
 
+    void pushTranslation(Point p) {
+        auto back = offsets_.empty() ? Point{} : offsets_.back();
+        offsets_.push_back(p + back);
+    }
+
+    void popTranslation() {
+        offsets_.pop_back();
+    }
+
     void setFrameBuffer(float w, float h) {
         width_ = w; height_ = h;
         textRenderer_.setFrameBuffer(w, h);
         shapeRenderer_.setFrameBuffer(w, h);
     }
+
+    bool isClippedOut(const Rect& r) const {
+        // No clip active: nothing to be clipped out of. getMask wouldn't fill rect in this case.
+        if (masks_.empty()) return false;
+        glm::vec4 rect;
+        GLuint _ = 0;
+        // An empty clip hides everything.
+        if (!getMask(_, rect)) return true;
+        // Both in screen space: the mask carries the offset it was pushed under, the frame takes the current one.
+        Point o = offset();
+        float x = r.origin.x + o.x, y = r.origin.y + o.y;
+        return (x + r.width < rect.x || x > rect.x + rect.z)
+            || (y + r.height < rect.y || y > rect.y + rect.w);
+    }
 private:
     std::vector<float> opacity_;
-    std::vector<Mask*> masks_;
+    std::vector<std::pair<Mask*, Point>> masks_;
+    std::vector<Point> offsets_;
     GLuint whiteTex_ = 0;
     TextRenderer textRenderer_;
     ShapeRenderer shapeRenderer_;
     float width_ = 0, height_ = 0;
 
-    bool getMask(GLuint& tex, glm::vec4& rect) {
+    bool getMask(GLuint& tex, glm::vec4& rect) const {
         if (masks_.empty()) return true;
-        const Mask& m = *masks_.back();
+        const auto clip = masks_.back();
+        const auto& m = *clip.first;
         if (m.tex == 0) return false; 
         tex = m.tex;
-        rect = glm::vec4(m.x0, m.y0, m.w, m.h);
+        rect = glm::vec4(m.x0 + clip.second.x, m.y0 + clip.second.y, m.w, m.h);
         return true;
+    }
+
+    Point offset() const {
+        return offsets_.empty() ? Point{} : offsets_.back();
     }
 };

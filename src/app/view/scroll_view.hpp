@@ -9,6 +9,7 @@ public:
 
     void addSubview(std::shared_ptr<View> view) override;
     void layoutSubviews() override;
+    void pointerDown(int, Point, double) override;
 private:
     ScrollAxis axis_;
     std::shared_ptr<View> container_;

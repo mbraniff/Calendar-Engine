@@ -3,21 +3,58 @@
 #include "app/text/text_layout.hpp"
 #include <cmath>
 #include <cstddef>
+#include <cstdio>
 #include <optional>
 #include <string>
 
 Text::Text(std::string text) {
     this->text = text;
+    this->text.onChange([this]{
+        setNeedsLayout();
+    });
 }
 
 void Text::drawSelf(Renderer &r) {
+    float factor = alignmentFactor_;
+    if (factor != alignedFactor_) align(factor);
     Rect frame = contentFrame();
-    r.drawText(text_, font.get(fontSize, fontWeight), frame.origin, color);
+    r.drawText(aligned_, font.get(fontSize, fontWeight), frame.origin, color);
+}
+
+void Text::layoutSubviews() {
+    // View::layout measures us at the final proposal right before this, so measured_ holds our glyphs.
+    text_.swap(measured_);
+
+    lines_.clear();
+    textWidth_ = 0;
+    for (size_t start = 0; start < text_.size();) {
+        size_t end = start;
+        while (end < text_.size() && text_[end].pos.y == text_[start].pos.y) end++;
+        const TextEntry& last = text_[end - 1];
+        float lineWidth = last.pos.x + last.ch->Bearing.x + last.ch->Size.x;
+        lines_.push_back({ end, lineWidth });
+        textWidth_ = std::max(textWidth_, lineWidth);
+        start = end;
+    }
+    textWidth_ = std::ceil(textWidth_);
+    alignedFactor_ = std::numeric_limits<float>::quiet_NaN();
+}
+
+void Text::align(float factor) {
+    aligned_ = text_;
+    size_t start = 0;
+    for (const Line& line : lines_) {
+        // Whole pixels, so glyphs don't land on half-pixels and blur.
+        float shift = std::floor((textWidth_ - line.width) * factor);
+        for (size_t i = start; i < line.end; i++) aligned_[i].pos.x += shift;
+        start = line.end;
+    }
+    alignedFactor_ = factor;
 }
 
 Size Text::measure(std::optional<float> w, std::optional<float> h) {
     auto& set = font.get(fontSize, fontWeight);
-    text_.clear();
+    measured_.clear();
 
     float x = 0, y = 0;
     size_t lineStart = 0, wordStart = 0;
@@ -39,26 +76,27 @@ Size Text::measure(std::optional<float> w, std::optional<float> h) {
     auto truncate = [&](size_t end) {
         const Font::Character& dot = set.chars['.'];
         float dotsWidth = 2 * advanceOf(dot) + dot.Bearing.x + dot.Size.x;
-        text_.resize(end);
+        measured_.resize(end);
         float pen = 0;
-        while (text_.size() > lineStart) {
-            pen = text_.back().pos.x + advanceOf(*text_.back().ch);
+        while (measured_.size() > lineStart) {
+            pen = measured_.back().pos.x + advanceOf(*measured_.back().ch);
             if (pen + dotsWidth <= w.value_or(infinity)) break;
-            text_.pop_back();
+            measured_.pop_back();
             pen = 0;
         }
         for (int k = 0; k < 3; k++) {
-            text_.push_back({ &dot, { pen, y } });
+            measured_.push_back({ &dot, { pen, y } });
             pen += advanceOf(dot);
         }
     };
 
+    std::string text = this->text;
     for (size_t i = 0; i < text.size(); i++) {
         char c = text[i];
         if (c == '\n') {
-            if (!nextLine()) { truncate(text_.size()); break; }
+            if (!nextLine()) { truncate(measured_.size()); break; }
             x = 0;
-            lineStart = wordStart = text_.size();
+            lineStart = wordStart = measured_.size();
             continue;
         }
 
@@ -68,7 +106,7 @@ Size Text::measure(std::optional<float> w, std::optional<float> h) {
         // Spaces aren't drawn; a trailing one may hang past the edge, and the next word wraps instead.
         if (c == ' ') {
             x += advance;
-            wordStart = text_.size();
+            wordStart = measured_.size();
             continue;
         }
 
@@ -76,41 +114,28 @@ Size Text::measure(std::optional<float> w, std::optional<float> h) {
         bool endOfWord = i + 1 == text.size() || text[i + 1] == ' ' || text[i + 1] == '\n';
         float right = endOfWord ? x + ch.Bearing.x + ch.Size.x : x + advance;
 
-        if (right > w.value_or(infinity) && text_.size() > lineStart) {
+        if (right > w.value_or(infinity) && measured_.size() > lineStart) {
             // Move the whole word down, or break mid-word if it's the only thing on the line.
-            size_t from = wordStart > lineStart ? wordStart : text_.size();
+            size_t from = wordStart > lineStart ? wordStart : measured_.size();
             if (!nextLine()) { truncate(from); break; }
-            float shift = from < text_.size() ? text_[from].pos.x : x;
-            for (size_t j = from; j < text_.size(); j++) {
-                text_[j].pos.x -= shift;
-                text_[j].pos.y = y;
+            float shift = from < measured_.size() ? measured_[from].pos.x : x;
+            for (size_t j = from; j < measured_.size(); j++) {
+                measured_[j].pos.x -= shift;
+                measured_[j].pos.y = y;
             }
             x -= shift;
             lineStart = wordStart = from;
         }
 
-        text_.push_back({ &ch, { x, y } });
+        measured_.push_back({ &ch, { x, y } });
         x += advance;
     }
 
     float width = 0;
-    for (auto& e : text_) width = std::max(width, e.pos.x + e.ch->Bearing.x + e.ch->Size.x);
+    for (auto& e : measured_) width = std::max(width, e.pos.x + e.ch->Bearing.x + e.ch->Size.x);
     width = std::ceil(width);
 
-    for (size_t start = 0; start < text_.size();) {
-        size_t end = start;
-        while (end < text_.size() && text_[end].pos.y == text_[start].pos.y) end++;
-
-        const TextEntry& last = text_[end - 1];
-        float lineWidth = last.pos.x + last.ch->Bearing.x + last.ch->Size.x;
-        // Whole pixels, so glyphs don't land on half-pixels and blur.
-        float shift = std::floor((width - lineWidth) * alignmentFactor_);
-        for (size_t i = start; i < end; i++) text_[i].pos.x += shift;
-
-        start = end;
-    }
-
-    return { width, text_.empty() ? 0 : y + set.lineHeight };
+    return { width, measured_.empty() ? 0 : y + set.lineHeight };
 }
 
 void Text::setTextAlignment(TextAlignment alignment) {
