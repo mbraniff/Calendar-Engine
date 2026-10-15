@@ -26,10 +26,14 @@ void DragGestureRecognizer::pointerMoved(int channel, Point p, double time) {
         setState(Changed);
     }
     float xDist = p.x - lastEvent_.p.x, yDist = p.y - lastEvent_.p.y;
+    constexpr float d = 0.998f;
+    auto project = [](float v) { return (v / 1000.0f) * d / (1.0f - d); };
+    Size velocity_ = velocity();
     onChange_(DragEvent{p,
          { xDist, yDist },
         startPoint_,
-        velocity(),
+        { p.x + project(velocity_.width), p.y + project(velocity_.height) },
+        velocity_,
     time});
     lastEvent_ = PointerEvent{channel, p, Move, time};
 }
@@ -40,11 +44,15 @@ void DragGestureRecognizer::pointerUp(int channel, Point p, double time) {
         return;
     }
     addSample(p, time);
+    Size velocity_ = velocity();
     float xDist = p.x - lastEvent_.p.x, yDist = p.y - lastEvent_.p.y;
+    constexpr float d = 0.998f;
+    auto project = [](float v) { return (v / 1000.0f) * d / (1.0f - d); };
     onEnd_(DragEvent{p,
          { xDist, yDist },
         startPoint_,
-        velocity(),
+        { p.x + project(velocity_.width), p.y + project(velocity_.height) },
+        velocity_,
     time});
 }
 

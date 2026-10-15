@@ -2,8 +2,8 @@
 #include "app/graphics.hpp"
 #include <cstddef>
 
-Size VStack::measure(Size proposal) {
-    auto sizes = childSizes(proposal, Axis::Vertical);
+Size VStack::measure(std::optional<float> w, std::optional<float> h) {
+    auto sizes = childSizes(w, h, Axis::Vertical);
     Size total{ 0, 0 };
     for (auto& s : sizes) {
         total.width = std::max(total.width, s.width);
@@ -15,7 +15,7 @@ Size VStack::measure(Size proposal) {
 
 void VStack::layoutSubviews() {
     Rect content = contentFrame();
-    auto sizes = childSizes({ content.width, content.height }, Axis::Vertical);
+    auto sizes = childSizes(content.width, content.height, Axis::Vertical);
     float y = content.origin.y;
     for (size_t i = 0; i < subviews_.size(); ++i) {
         Size s = sizes[i];

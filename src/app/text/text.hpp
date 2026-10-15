@@ -4,6 +4,7 @@
 #include "app/text/text_layout.hpp"
 #include "app/view/view.hpp"
 #include "app/rendering/renderer.hpp"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,7 +17,7 @@ public:
     Animation::Animatable<Color> color;
     Text(std::string text);
     void drawSelf(Renderer &) override;
-    Size measure(Size proposed) override;
+    Size measure(std::optional<float> w, std::optional<float> h) override;
     void setTextAlignment(TextAlignment alignment);
     TextAlignment getTextAlignment();
 private:

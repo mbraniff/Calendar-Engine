@@ -10,6 +10,7 @@ public:
         Point location;
         Size translation;
         Point startLocation;
+        Point projectedEnd;
         Size velocity;
         double time;
     };

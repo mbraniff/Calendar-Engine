@@ -2,6 +2,7 @@
 #include "app/view/view.hpp"
 #include <functional>
 #include <memory>
+#include <optional>
 
 class Button : public View {
 public:
@@ -9,7 +10,7 @@ public:
         subviews_.push_back(content);
     }
 
-    Size measure(Size proposed) override;
+    Size measure(std::optional<float> w, std::optional<float> h) override;
     void pointerCancelled() override;
     void pointerDown(int, Point, double) override;
     void pointerMoved(int, Point, double) override;

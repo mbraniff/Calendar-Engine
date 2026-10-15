@@ -1,9 +1,10 @@
 #include "app/containers/hstack.hpp"
 #include "app/graphics.hpp"
 #include <cstddef>
+#include <optional>
 
-Size HStack::measure(Size proposal) {
-    auto sizes = childSizes(proposal, Axis::Horizontal);
+Size HStack::measure(std::optional<float> w, std::optional<float> h) {
+    auto sizes = childSizes(w, h, Axis::Horizontal);
     Size total{ 0, 0 };
     for (auto& s : sizes) {
         total.height = std::max(total.height, s.height);
@@ -15,7 +16,7 @@ Size HStack::measure(Size proposal) {
 
 void HStack::layoutSubviews() {
     Rect content = contentFrame();
-    auto sizes = childSizes({ content.width, content.height }, Axis::Horizontal);
+    auto sizes = childSizes(content.width, content.height, Axis::Horizontal);
     float x = content.origin.x;
     for (size_t i = 0; i < subviews_.size(); i++) {
         Size s = sizes[i];

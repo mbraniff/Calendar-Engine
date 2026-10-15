@@ -12,17 +12,36 @@ namespace Animation {
         virtual bool step(float dt, float& value, float& velocity, float target) = 0;
     };
 
-    struct Linear : Motion {
+    enum class Easing {
+        Linear, EaseIn, EaseOut
+    };
+
+    inline float accelerate(Easing e, float start) {
+    switch (e) {
+        using enum Easing;
+        case Linear:
+            return start;
+        case EaseIn:
+            return start * start;
+        case EaseOut:
+            return std::sqrt(start);
+        }
+        return start;
+    }
+
+    struct Timed : Motion {
         float time_ = 0.3f, elapsed_ = 0.0f;
         bool started_ = false;
         float start_;
-    public:
-        Linear(float time = 0.3f) : time_(time) {}
+        Easing easing_ = Easing::Linear;
 
-        bool step(float dt, float& value, float& velocity, float target) override {
+        Timed(Easing easing = Easing::Linear, float time = 0.3f) : easing_(easing), time_(time) {}
+
+        bool step(float dt, float&value, float& velocity, float target) override {
             if (!started_) { started_ = true; start_ = value; }
             elapsed_ += dt;
             float t = std::min(elapsed_ / time_, 1.0f);
+            t = accelerate(easing_, t);
             float next = start_ + (target - start_) * t;
             velocity = dt > 0 ? (next - value) / dt : float{};
             value = next;
@@ -57,36 +76,6 @@ namespace Animation {
       int remaining_;
   };
 
-  struct EaseIn : Linear {
-    using Linear::Linear;
-
-    bool step(float dt, float &value, float &velocity, float target) override {
-        if (!started_) { started_ = true; start_ = value; }
-        elapsed_ += dt;
-        float t = std::min(elapsed_ / time_, 1.0f);
-        t *= t;
-        float next = start_ + (target - start_) * t;
-        velocity = dt  > 0 ? (next - value) / dt : float{};
-        value = next;
-        return t < 1.0f;
-    }
-  };
-
-  struct EaseOut : Linear {
-    using Linear::Linear;
-
-    bool step(float dt, float &value, float &velocity, float target) override {
-        if (!started_) { started_ = true; start_ = value; }
-        elapsed_ += dt;
-        float t = std::min(elapsed_ / time_, 1.0f);
-        t = std::sqrt(t);
-        float next = start_ + (target - start_) * t;
-        velocity = dt  > 0 ? (next - value) / dt : float{};
-        value = next;
-        return t < 1.0f;
-    }
-  };
-
   // Slows from its starting velocity at the rate that comes to rest exactly on the target.
   struct Decay : Motion {
     bool started_ = false;
@@ -112,25 +101,19 @@ namespace Animation {
     bool step(float dt, float& x, float& v, float target) override {
         v += (-stiffness * (x - target) - damping * v) * dt;
         x += v * dt;
-        return std::abs(v) > 0.01f || std::abs(x - target) > 0.01f;
+        bool notDone = std::abs(v) > 0.01f || std::abs(x - target) > 0.01f;
+        x = notDone ? x : target;
+        return notDone;
     }
   };
 
-  static constexpr auto linear(float duration = 0.3f) {
-    return [=] { return std::make_unique<Linear>(duration); };
+  static constexpr auto timed(Easing easing = Easing::Linear, float duration = 0.3f) {
+    return [=] { return std::make_unique<Timed>(easing, duration); };
   }
 
   template <typename F>
   static constexpr auto autoreverse(F&& make, int count = 0) {
     return [=] { return std::make_unique<AutoReverse>(make, count); };
-  }
-
-  static constexpr auto easeIn(float duration = 0.3f) {
-    return [=] { return std::make_unique<EaseIn>(duration); };
-  }
-
-  static constexpr auto eastOut(float duration = 0.3f) {
-    return [=] { return std::make_unique<EaseOut>(duration); };
   }
 
   static constexpr auto decay() {

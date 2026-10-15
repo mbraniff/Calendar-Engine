@@ -4,11 +4,12 @@
 #include "app/graphics.hpp"
 #include "app/view/view.hpp"
 #include <memory>
+#include <optional>
 
 void Button::pointerCancelled() {
     isHighlighted = false;
     trackingChannel = -1;
-    animate(Animation::easeIn(), [&]{
+    animate(Animation::timed(Animation::Easing::EaseIn), [&]{
         subviews_.front()->opacity = originalOpacity;
     });
     originalOpacity = 1.0f;
@@ -27,7 +28,7 @@ void Button::pointerMoved(int channel, Point p, double time) {
     bool inside = contentFrame().contains(p);
     if (isHighlighted == inside) return;
     isHighlighted = inside;
-    animate(Animation::easeIn(), [&]{
+    animate(Animation::timed(Animation::Easing::EaseIn), [&]{
         subviews_.front()->opacity = isHighlighted ? originalOpacity * 0.4 : originalOpacity;
     });
 }
@@ -40,8 +41,8 @@ void Button::pointerUp(int channel, Point p, double time) {
     pointerCancelled();
 }
 
-Size Button::measure(Size proposal) {
-    return subviews_.front()->sizeThatFits(proposal);
+Size Button::measure(std::optional<float> w, std::optional<float> h) {
+    return subviews_.front()->sizeThatFits(w, h);
 }
 
 std::shared_ptr<View> Button::hitTest(Point p) {

@@ -21,6 +21,7 @@
 #include "app/shapes/shape_view.hpp"
 #include "app/text/text.hpp"
 #include "app//text/text_layout.hpp"
+#include "app/view/scroll_view.hpp"
 #include "stb_image.h"
 #include "platform/platform.h"
 #include <glm/glm.hpp>
@@ -136,16 +137,15 @@ int main() {
             auto view = weak.lock();
             if (!view) return;
 
-            constexpr float d = 0.99f;
-            auto project = [](float v) { return (v / 1000.0f) * d / (1.0f - d); };
-
             Point anchor = view->anchor();
             Point offset = view->offset;   // current, including this poll's moves
             Size s = view->size();
+            // How much farther the flick carries the pointer, applied to where the view is now.
+            Size flick = { event.projectedEnd.x - event.location.x, event.projectedEnd.y - event.location.y };
 
-            float x = std::clamp(anchor.x + offset.x + event.translation.width + project(event.velocity.width),
+            float x = std::clamp(anchor.x + offset.x + event.translation.width + flick.width,
                                 0.0f, (float)w - s.width);
-            float y = std::clamp(anchor.y + offset.y + event.translation.height + project(event.velocity.height),
+            float y = std::clamp(anchor.y + offset.y + event.translation.height + flick.height,
                                 0.0f, (float)h - s.height);
 
             animate(Animation::spring(), [&] {
@@ -172,6 +172,10 @@ int main() {
         float deltaTime = 0.0f;
         subText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
 
+        auto containerHStack = std::make_shared<HStack>();
+        auto scrollView = std::make_shared<ScrollView>();
+        scrollView->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(20.0f), Color::black().withAlpha(0.75f));
+        auto scrollViewFrame = scrollView->frame({ .width = 300, .height = 750 });
         auto vstack = std::make_shared<VStack>();
         auto hstack = std::make_shared<HStack>(0);
         auto frame = vstack->frame({.maxHeight = infinity});
@@ -199,6 +203,18 @@ int main() {
         vstack->addSubview(bigText);
         vstack->addSubview(swapAlignment);
 
+        containerHStack->addSubview(frame);
+        containerHStack->addSubview(scrollViewFrame);
+        auto scrollVStack = std::make_shared<VStack>();
+        for (int i=0; i<200; i++) {
+            auto text = std::make_shared<Text>("This is some text yippee yippee doo, this is some text, won't you let me coo! I will go dance and eat the breakfast!");
+            text->fontSize = 72;
+            text->fontWeight = Font::Weight::Heavy;
+            text->color = Color::white();
+            scrollVStack->addSubview(text);
+        }
+        scrollView->addSubview(scrollVStack);
+
         hstack->clipShape = std::make_unique<Rectangle>();
         // auto bg = std::make_shared<ShapeView>(std::make_shared<Rectangle>(), Color::red());
         // frame->background = bg;
@@ -206,13 +222,13 @@ int main() {
         hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(25), Color::green())->frame({.width = 200, .height = 200}));
         hstack->padding(8);
         mainView->addSubview(hstack);
-        mainView->addSubview(frame);
+        mainView->addSubview(containerHStack);
         mainView->addSubview(fps);
         mainView->addSubview(counterView);
         subText->padding(8);
         float dirx = 1, diry = 1;
 
-        animate(Animation::autoreverse(Animation::linear(1.0f), 0), [&] {
+        animate(Animation::autoreverse(Animation::timed(Animation::Easing::EaseOut, 1.0f), 0), [&] {
             subText->background->opacity = 0.2f;
         });
 

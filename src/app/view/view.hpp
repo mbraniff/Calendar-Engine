@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/ext/vector_float2.hpp>
 #include <memory>
+#include <optional>
 #include <vector>
 #include "app/animation/animatable.hpp"
 #include "app/gestures/gesture.hpp"
@@ -18,22 +19,23 @@ public:
     std::unique_ptr<Shape> clipShape;
     std::shared_ptr<View> background;
 
-    Size sizeThatFits(Size proposal) {
+    Size sizeThatFits(std::optional<float> w, std::optional<float> h) {
         float padW = padding_.left + padding_.right;
         float padH = padding_.top + padding_.bottom;
-        Size inner = measure({ std::max(0.0f, proposal.width - padW),
-            std::max(0.0f, proposal.height - padH) });
+        Size inner = measure( w.has_value() ? std::max(0.0f, w.value() - padW) : w,
+            h.has_value() ? std::max(0.0f, h.value() - padH) : h);
         return { inner.width + padW, inner.height + padH };
     }
 
-    void layout(Rect frame) {
-        Size want = sizeThatFits({frame.width, frame.height});
-        want.width = std::min(want.width, frame.width);
-        want.height = std::min(want.height, frame.height);
+    void layout(Proposal p) {
+        Size want = sizeThatFits(p.width, p.height);
+        want.width = std::min(want.width, p.width.value_or(infinity));
+        want.height = std::min(want.height, p.height.value_or(infinity));
 
+        // An unspecified dimension leaves no slack to align within, so the view sits at the origin.
         anchor_ = {
-            frame.origin.x + (frame.width - want.width) * alignment.x,
-            frame.origin.y + (frame.height - want.height) * alignment.y,
+            p.origin.x + (p.width.value_or(want.width) - want.width) * alignment.x,
+            p.origin.y + (p.height.value_or(want.height) - want.height) * alignment.y,
         };
         Point offset = this->offset;
         frame_.origin = { anchor_.x + offset.x, anchor_.y + offset.y };
@@ -42,7 +44,7 @@ public:
         frame_.width = want.width;
         frame_.height = want.height;
 
-        if (background) background->layout(frame_);
+        if (background) background->layout(frame_.to_proposal());
 
         layoutSubviews();
     }
@@ -68,7 +70,7 @@ public:
 
     Point anchor() const { return anchor_; }
 
-    void addSubview(std::shared_ptr<View> view) {
+    virtual void addSubview(std::shared_ptr<View> view) {
         view->parent_ = std::weak_ptr<View>(weak_from_this());
         subviews_.push_back(std::move(view));
     }
@@ -91,10 +93,21 @@ public:
     virtual void pointerCancelled() {}
 
 protected:
-    virtual Size measure(Size proposed) { return proposed; }
+    virtual Size measure(std::optional<float> w, std::optional<float> h) {
+        if (w.has_value() && h.has_value()) return { w.value(), h.value() };
+        if (subviews_.empty()) return { w.value_or(0), h.value_or(0) };
+
+        Size out;
+        for (auto& v : subviews_) {
+            auto ideal = v->sizeThatFits(w, h);
+            out.width = std::max(out.width, ideal.width);
+            out.height = std::max(out.height, ideal.height);
+        }
+        return out;
+    }
     virtual void layoutSubviews() {
         for (auto& child : subviews_)
-            child->layout(contentFrame());
+            child->layout(contentFrame().to_proposal());
     }
     virtual void drawSelf(Renderer&) {}
 

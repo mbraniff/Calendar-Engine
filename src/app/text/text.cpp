@@ -1,7 +1,9 @@
 #include "app/text/text.hpp"
+#include "app/graphics.hpp"
 #include "app/text/text_layout.hpp"
 #include <cmath>
 #include <cstddef>
+#include <optional>
 #include <string>
 
 Text::Text(std::string text) {
@@ -13,7 +15,7 @@ void Text::drawSelf(Renderer &r) {
     r.drawText(text_, font.get(fontSize, fontWeight), frame.origin, color);
 }
 
-Size Text::measure(Size proposal) {
+Size Text::measure(std::optional<float> w, std::optional<float> h) {
     auto& set = font.get(fontSize, fontWeight);
     text_.clear();
 
@@ -23,8 +25,12 @@ Size Text::measure(Size proposal) {
 
     // Moves down a line, or returns false if that line wouldn't fit. The caller resets x.
     auto nextLine = [&]() {
+        if (!h.has_value()) {
+            y += set.lineHeight;
+            return true;
+        }
         // Slack so re-measuring at exactly our own height doesn't lose the last line to float rounding.
-        if (y + 2 * set.lineHeight > proposal.height + 0.01f) return false;
+        if (y + 2 * set.lineHeight > h.value() + 0.01f) return false;
         y += set.lineHeight;
         return true;
     };
@@ -37,7 +43,7 @@ Size Text::measure(Size proposal) {
         float pen = 0;
         while (text_.size() > lineStart) {
             pen = text_.back().pos.x + advanceOf(*text_.back().ch);
-            if (pen + dotsWidth <= proposal.width) break;
+            if (pen + dotsWidth <= w.value_or(infinity)) break;
             text_.pop_back();
             pen = 0;
         }
@@ -70,7 +76,7 @@ Size Text::measure(Size proposal) {
         bool endOfWord = i + 1 == text.size() || text[i + 1] == ' ' || text[i + 1] == '\n';
         float right = endOfWord ? x + ch.Bearing.x + ch.Size.x : x + advance;
 
-        if (right > proposal.width && text_.size() > lineStart) {
+        if (right > w.value_or(infinity) && text_.size() > lineStart) {
             // Move the whole word down, or break mid-word if it's the only thing on the line.
             size_t from = wordStart > lineStart ? wordStart : text_.size();
             if (!nextLine()) { truncate(from); break; }

@@ -23,6 +23,16 @@ struct Point {
         float yd = y - to.y;
         return xd * xd + yd * yd;
     }
+
+    Point operator-(const Point& r) const {
+        return { x - r.x, y - r.y };
+    }
+};
+
+struct Proposal {
+    Point origin;
+    std::optional<float> width;
+    std::optional<float> height;
 };
 
 struct PointerEvent {
@@ -40,6 +50,10 @@ struct Rect {
     bool contains(Point p) {
         return p.x >= origin.x && p.x <= origin.x + width
             && p.y >= origin.y && p.y <= origin.y + height;
+    }
+
+    Proposal to_proposal() {
+        return { origin, width, height };
     }
 };
 
