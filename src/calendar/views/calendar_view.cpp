@@ -1,4 +1,5 @@
 #include "calendar/views/calendar_view.hpp"
+#include "calendar/views/calendar_cell_view.hpp"
 #include "ui/graphics.hpp"
 #include "ui/containers/hstack.hpp"
 #include "ui/containers/vstack.hpp"
@@ -21,7 +22,7 @@ CalendarView::CalendarView() {
     std::chrono::year_month_day currentDay = std::chrono::floor<std::chrono::days>(now);
     std::chrono::year_month_day firstOfMonth = currentDay.year() / currentDay.month() / 1;
     auto vstack = std::make_shared<VStack>(0.0f);
-    auto title = std::make_shared<Text>(monthNames[static_cast<unsigned int>(currentDay.month())]);
+    auto title = std::make_shared<Text>(monthNames[static_cast<unsigned int>(currentDay.month()) - 1]);
     title->fontSize = 72;
     title->fontWeight = Font::Weight::Bold;
     vstack->addSubview(title);
@@ -37,17 +38,12 @@ CalendarView::CalendarView() {
             if (!hitFirstDay && firstDayIndex == index) {
                 hitFirstDay = true;
             }
-            auto v = std::make_shared<View>();
-            v->borderWidth = 1;
+            auto v = std::make_shared<CalendarCellView>();
             hstack->addSubview(v);
             if (hitFirstDay) {
-                auto day = std::make_shared<Text>(std::to_string(daysCount++));
-                day->alignment = Alignment::topTrailing();
-                day->padding(4);
-                v->addSubview(day);
-                if (static_cast<unsigned int>(currentDay.day()) == daysCount) {
-                    day->background = std::make_shared<ShapeView>(std::make_shared<Circle>(), Color::red().withAlpha(0.8f));
-                }
+                v->highlighted = static_cast<unsigned int>(currentDay.day()) == daysCount;
+                v->date = std::to_string(daysCount++);
+                v->setup();
             }
             index++;
         }
