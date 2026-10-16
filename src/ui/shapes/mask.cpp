@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <vector>
 #include FT_OUTLINE_H
+#include FT_STROKER_H
 
 FT_Library getLibrary() {
     static FT_Library lib = nullptr;
@@ -32,17 +33,20 @@ GLuint uploadMask(const std::vector<uint8_t>& coverage, int w, int h) {
     return tex;
 }
 
-void Mask::update(const Path& path, const Mask* parent) {
+void Mask::update(const Path& path, const Mask* parent, std::optional<float> stroke) {
     uint64_t pv = parent ? parent->version : 0;
-    if (version != 0 && path == path_ && pv == parentVersion_) return;
+    if (version != 0 && path == path_ && stroke == stroke_ && pv == parentVersion_) return;
 
     static uint64_t nextVersion = 1;
     path_ = path;
+    stroke_ = stroke;
     parentVersion_ = pv;
     version = nextVersion++;
     int oldW = w, oldH = h;
 
     Rect b = path.bounds();
+    // A stroke reaches half its width past the path, and a miter join up to √2 times that: pad by the whole width.
+    if (stroke) b = b.inset(-*stroke);
     int left   = (int)std::floor(b.origin.x);
     int top    = (int)std::floor(b.origin.y);
     int right  = (int)std::ceil(b.origin.x + b.width);
@@ -66,7 +70,7 @@ void Mask::update(const Path& path, const Mask* parent) {
         return;
     }
 
-    coverage = rasterize(path, x0, y0, w, h);
+    coverage = rasterize(path, x0, y0, w, h, stroke);
 
     if (parent) {
         for (int j = 0; j < h; j++) {
@@ -90,7 +94,7 @@ void Mask::update(const Path& path, const Mask* parent) {
 
 }
 
-std::vector<uint8_t> rasterize(const Path &path, int x0, int y0, int w, int h) {
+std::vector<uint8_t> rasterize(const Path &path, int x0, int y0, int w, int h, std::optional<float> stroke) {
     FT_Library lib = getLibrary();
     std::vector<FT_Vector> pts;
     std::vector<unsigned char> tags;
@@ -145,6 +149,28 @@ std::vector<uint8_t> rasterize(const Path &path, int x0, int y0, int w, int h) {
     bm.buffer = coverage.data();
     bm.num_grays = 256;
     bm.pixel_mode = FT_PIXEL_MODE_GRAY;
-    FT_Outline_Get_Bitmap(lib, &outline, &bm);
+    if (!stroke) {
+        FT_Outline_Get_Bitmap(lib, &outline, &bm);
+        return coverage;
+    }
+
+    // The stroker turns each contour into the outline of a band around it, which then fills like any other.
+    FT_Stroker stroker;
+    if (FT_Stroker_New(lib, &stroker)) throw std::runtime_error("FT_Stroker_New failed");
+    FT_Stroker_Set(stroker, FT_Fixed(std::lround(*stroke / 2 * 64.0f)),
+        FT_STROKER_LINECAP_BUTT, FT_STROKER_LINEJOIN_MITER_FIXED, 4 << 16);
+    FT_Stroker_ParseOutline(stroker, &outline, false);
+
+    FT_UInt nPoints = 0, nContours = 0;
+    FT_Stroker_GetCounts(stroker, &nPoints, &nContours);
+    FT_Outline stroked{};
+    FT_Outline_New(lib, nPoints, nContours, &stroked);
+    stroked.n_points = 0;     // Export appends to whatever the outline already holds
+    stroked.n_contours = 0;
+    FT_Stroker_Export(stroker, &stroked);
+    FT_Stroker_Done(stroker);
+
+    FT_Outline_Get_Bitmap(lib, &stroked, &bm);
+    FT_Outline_Done(lib, &stroked);
     return coverage;
 }

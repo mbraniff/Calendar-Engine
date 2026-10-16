@@ -80,6 +80,8 @@ endif()
 
 add_executable(calendar
     src/calendar/main.cpp
+    src/calendar/playground_view_controller.cpp
+    src/calendar/views/calendar_view.cpp
     src/calendar/stb_image.cpp
     src/platform/platform_glfw.cpp
 )

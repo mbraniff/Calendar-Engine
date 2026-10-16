@@ -2,6 +2,7 @@
 #include "ui/GL.h"
 #include "ui/shapes/path.hpp"
 #include <cstdint>
+#include <optional>
 #include <vector>
 
   struct Mask {
@@ -15,13 +16,15 @@
       Mask(const Mask&) = delete;             // owns a GL texture: no copies
       Mask& operator=(const Mask&) = delete;
 
-      void update(const Path& path, const Mask* parent);
+      // With a stroke width, covers a band that wide centred on the path instead of its inside.
+      void update(const Path& path, const Mask* parent, std::optional<float> stroke = std::nullopt);
 
   private:
       Path path_;
+      std::optional<float> stroke_;
       uint64_t parentVersion_ = 0;
   };
 
 
-std::vector<uint8_t> rasterize(const Path& path, int x0, int y0, int w, int h);
+std::vector<uint8_t> rasterize(const Path& path, int x0, int y0, int w, int h, std::optional<float> stroke = std::nullopt);
 GLuint uploadMask(const std::vector<uint8_t>& coverage, int w, int h);

@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <functional>
 #include <limits>
 #include <optional>
@@ -61,16 +62,22 @@ struct Rect {
     Proposal to_proposal() {
         return { origin, width, height };
     }
+
+    Rect inset(float d) const {
+        return { { origin.x + d, origin.y + d }, std::max(0.0f, width - 2 * d), std::max(0.0f, height - 2 * d) };
+    }
 };
 
 struct Color {
     float r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
     const Color withAlpha(float alpha) const { return {r, g, b, alpha }; }
+    static constexpr Color clear() { return { 0.0f, 0.0f, 0.0f, 0.0f }; }
     static constexpr Color white() { return { 1.0f, 1.0f, 1.0f }; }
     static constexpr Color black() { return { 0.0f, 0.0f, 0.0f }; }
     static constexpr Color red() { return { 1.0f, 0.0f, 0.0f }; }
     static constexpr Color green() { return { 0.0f, 1.0f, 0.0f }; }
     static constexpr Color blue() { return { 0.0f, 0.0f, 1.0f }; }
+    static constexpr Color gray() { return { 0.5f, 0.5f, 0.5f, 1.0f }; }
 };
 
 struct Alignment {

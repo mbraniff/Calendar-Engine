@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <glm/ext/vector_float2.hpp>
 #include <memory>
 #include <optional>
@@ -17,7 +18,12 @@ public:
     Animation::Animatable<float> opacity = 1.0f;
     Animation::Animatable<Point> offset;
     std::unique_ptr<Shape> clipShape;
+    // Strokes our clip shape (or our frame, without one) this wide, inside the frame, over our subviews.
+    std::optional<float> borderWidth;
+    Animation::Animatable<Color> borderColor = Color::black();
     std::shared_ptr<View> background;
+    // Laid out over our frame like background, but drawn after our subviews.
+    std::shared_ptr<View> overlay;
 
     Size sizeThatFits(std::optional<float> w, std::optional<float> h) {
         float padW = padding_.left + padding_.right;
@@ -30,6 +36,7 @@ public:
     void layout(Proposal p) {
         // setNeedsLayout() only marks ancestors, so a parent that changed size reaches us as a new proposal.
         if (!needsLayout_ && p == lastProposal_) { return; }
+        if (willLayout_) willLayout_();
         lastProposal_ = p;
         Size want = sizeThatFits(p.width, p.height);
         want.width = std::min(want.width, p.width.value_or(infinity));
@@ -48,22 +55,32 @@ public:
         frame_.height = want.height;
 
         if (background) background->layout(frame_.to_proposal());
+        if (overlay) overlay->layout(frame_.to_proposal());
 
         needsLayout_ = false;
         layoutSubviews();
+        if (didLayout_) didLayout_();
     }
 
     void render(Renderer& r) {
         r.pushTranslation(offset);
         if (clipShape) r.pushClip(clipShape->pathIn(frame_), clipMask_);
         r.pushOpacity(opacity);
-        if (!r.isClippedOut(frame_)) {
+        bool visible = !r.isClippedOut(frame_);
+        if (visible && !visible_ && willAppear_) willAppear_();
+        if (visible) {
             if (background) background->render(r);
             drawSelf(r);
         }
         for (auto& child : subviews_)
             child->render(r);
+        if (visible && overlay) overlay->render(r);
+        if (visible && !visible_ && didAppear_) didAppear_();
+        if (!visible && visible_ && didDisappear_) didDisappear_();
+        visible_ = visible;
         if (clipShape) r.popClip();
+        // After popping our clip: the border lies inside it already, and clipping again would thin its outer edge.
+        if (visible && borderWidth) drawBorder(r);
         r.popOpacity();
         r.popTranslation();
     }
@@ -106,6 +123,7 @@ public:
     void setNeedsLayout() {
         needsLayout_ = true;
         if (background) background->setNeedsLayout();
+        if (overlay) overlay->setNeedsLayout();
         auto p = parent_.lock();
         if (p) p->setNeedsLayout();
     }
@@ -127,6 +145,11 @@ protected:
             child->layout(contentFrame().to_proposal());
     }
     virtual void drawSelf(Renderer&) {}
+    void drawBorder(Renderer& r) {
+        Rect inner = frame_.inset(*borderWidth / 2);
+        Path path = clipShape ? clipShape->pathIn(inner) : Rectangle().pathIn(inner);
+        r.drawShape(path, borderColor, borderMask_, borderWidth);
+    }
 
     Rect contentFrame() const {
         return { { frame_.origin.x + padding_.left, frame_.origin.y + padding_.top},
@@ -137,10 +160,21 @@ protected:
     Rect frame_;
     std::vector<std::shared_ptr<View>> subviews_;
     Mask clipMask_;
+    Mask borderMask_;
     Padding padding_ = Padding(0);
     std::weak_ptr<View> parent_;
     Point anchor_;
     std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers_;
     bool needsLayout_ = true;
     Proposal lastProposal_;
+    bool visible_ = false;
+
+    using ViewUpdateCallback = std::function<void()>;
+    ViewUpdateCallback willLayout_;
+    ViewUpdateCallback didLayout_;
+    ViewUpdateCallback willAppear_;
+    ViewUpdateCallback didAppear_;
+    ViewUpdateCallback didDisappear_;
+
+    friend class ViewController;
 };

@@ -27,8 +27,8 @@ public:
         textRenderer_.draw(text, pos + o, set);
     }
 
-    void drawShape(const Path& path, Color color, Mask& fill) {
-        fill.update(path, nullptr);
+    void drawShape(const Path& path, Color color, Mask& fill, std::optional<float> stroke = std::nullopt) {
+        fill.update(path, nullptr, stroke);
         if (fill.tex == 0) return;
 
         GLuint tex = whiteTex_;
