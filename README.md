@@ -46,7 +46,8 @@ The container and Pi OS trixie share the same Debian base, so glibc and libstdc+
 ## Project layout
 
 ```
-src/app/           application source
+src/ui/            view framework: views, layout, text, shapes, gestures, animation, rendering
+src/calendar/      the calendar app
 src/platform/      windowing and GL context setup (GLFW)
 shaders/           GLSL shaders
 assets/            textures and other runtime data

@@ -2,7 +2,7 @@
 #include <functional>
 #include <memory>
 #include <filesystem>
-#include "app/graphics.hpp"
+#include "ui/graphics.hpp"
 
 struct PlatformConfig {
     int width, height;

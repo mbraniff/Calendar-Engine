@@ -45,39 +45,45 @@ add_library(glm INTERFACE)
 target_include_directories(glm SYSTEM INTERFACE third_party/glm)
 add_library(glm::glm ALIAS glm)
 
-add_executable(calendar
-    src/app/main.cpp
-    src/app/stb_image.cpp
-    src/platform/platform_glfw.cpp
-    src/app/text/font.cpp
-    src/app/paths.cpp
-    src/app/text/text.cpp
-    src/app/shapes/mask.cpp
-    src/app/shapes/path.cpp
-    src/app/shapes/shape_view.cpp
-    src/app/containers/vstack.cpp
-    src/app/view/view.cpp
-    src/app/containers/frame.cpp
-    src/app/containers/hstack.cpp
-    src/app/pointer_dispatch.cpp
-    src/app/button/button.cpp
-    src/app/gestures/tap_gesture.cpp
-    src/app/gestures/drag_gesture.cpp
-    src/app/animation/animator.cpp
-    src/app/view/scroll_view.cpp
+# The view framework: views, layout, text, shapes, gestures, animation and rendering.
+add_library(ui STATIC
+    src/ui/paths.cpp
+    src/ui/pointer_dispatch.cpp
+    src/ui/animation/animator.cpp
+    src/ui/button/button.cpp
+    src/ui/containers/frame.cpp
+    src/ui/containers/hstack.cpp
+    src/ui/containers/vstack.cpp
+    src/ui/gestures/drag_gesture.cpp
+    src/ui/gestures/tap_gesture.cpp
+    src/ui/shapes/mask.cpp
+    src/ui/shapes/path.cpp
+    src/ui/shapes/shape_view.cpp
+    src/ui/text/font.cpp
+    src/ui/text/text.cpp
+    src/ui/view/scroll_view.cpp
+    src/ui/view/view.cpp
 )
-target_include_directories(calendar PRIVATE src)
-target_compile_definitions(calendar PRIVATE
+# PUBLIC: the framework's headers (GL.h, glm, FreeType types) need these wherever they're included.
+target_include_directories(ui PUBLIC src)
+target_compile_definitions(ui PUBLIC
     APP_PROFILE_${TARGET_PROFILE}
     APP_GL_${GL_API}
 )
-target_link_libraries(calendar PRIVATE glfw glm::glm Freetype::Freetype)
+target_link_libraries(ui PUBLIC glm::glm Freetype::Freetype)
 
 if(GL_API STREQUAL "CORE")
-    target_link_libraries(calendar PRIVATE glad)
+    target_link_libraries(ui PUBLIC glad)
 else()
-    target_link_libraries(calendar PRIVATE PkgConfig::GLES)
+    target_link_libraries(ui PUBLIC PkgConfig::GLES)
 endif()
+
+add_executable(calendar
+    src/calendar/main.cpp
+    src/calendar/stb_image.cpp
+    src/platform/platform_glfw.cpp
+)
+target_link_libraries(calendar PRIVATE ui glfw)
 
 # The Pi reads its touchscreen directly with libinput; GLFW has no touch API.
 if(TARGET_PROFILE STREQUAL "PI")

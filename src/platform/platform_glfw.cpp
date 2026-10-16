@@ -1,10 +1,10 @@
-#include "app/GL.h"
+#include "ui/GL.h"
 #include <filesystem>
 #include <memory>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include "platform.h"
-#include "app/graphics.hpp"
+#include "ui/graphics.hpp"
 #ifdef APP_PROFILE_PI
     #include "touch_libinput.hpp"
 #endif
