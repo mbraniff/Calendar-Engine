@@ -1,4 +1,5 @@
 #include "calendar/playground_view_controller.hpp"
+#include "ui/graphics.hpp"
 #include "ui/animation/animator.hpp"
 #include "ui/animation/motion.hpp"
 #include "ui/button/button.hpp"
@@ -7,6 +8,7 @@
 #include "ui/containers/vstack.hpp"
 #include "ui/gestures/drag_gesture.hpp"
 #include "ui/gestures/tap_gesture.hpp"
+#include "ui/image/image_view.hpp"
 #include "ui/shapes/shape.hpp"
 #include "ui/shapes/shape_view.hpp"
 #include "ui/view/scroll_view.hpp"
@@ -130,11 +132,28 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
     hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<Circle>(), Color::blue())->frame({.width = 100}));
     hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(25), Color::green())->frame({.width = 200, .height = 200}));
     hstack->padding(8);
+    // The same photo fit, filled and stretched into identical bordered boxes, then a tinted icon.
+    for (ContentMode mode : { ContentMode::Fit, ContentMode::Fill, ContentMode::Stretch }) {
+        auto image = std::make_shared<ImageView>("container.jpg");
+        image->contentMode = mode;
+        image->aspectRatio = 2.0f;
+        auto box = image->frame({ .width = 120, .height = 160 });
+        box->borderWidth = 1;
+        hstack->addSubview(box);
+    }
+    auto icon = std::make_shared<ImageView>("icons/chevron_right.png");
+    icon->templatedMode = 1;
+    icon->color = Color::red();
+    icon->clipShape = std::make_unique<Circle>();
+    animate(Animation::autoreverse(Animation::timed(Animation::Easing::Linear, 1.5f), 0), [&] {
+        icon->color = Color::black().withAlpha(0.3f);
+    });
+    hstack->addSubview(icon->frame({ .width = 80, .height = 80 }));
     view_->addSubview(hstack);
     view_->addSubview(containerHStack);
     view_->addSubview(counterView_);
 
-    animate(Animation::autoreverse(Animation::timed(Animation::Easing::EaseOut, 1.0f), 0), [&] {
+    animate(Animation::autoreverse(Animation::timed(Animation::Easing::EaseOut, 1.5f), 0), [&] {
         bouncer_->background->opacity = 0.2f;
     });
 }

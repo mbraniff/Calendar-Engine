@@ -5,6 +5,7 @@
 #include "ui/animation/motion.hpp"
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <memory>
 
 namespace Animation {
@@ -29,8 +30,10 @@ namespace Animation {
                 for (auto& m : motions_) m = tx->makeMotion();
                 Animator::shared().add(this);
             } else {
+                auto before = presented_;
                 presented_ = model_; velocity_ = {};
                 for (auto& m : motions_) m.reset();
+                if (presented_ != before && onChange_) onChange_();
             }
             return *this;
         }
@@ -53,18 +56,28 @@ namespace Animation {
 
         operator T() const { return Tr::join(presented_.data()); }
 
+        // Called whenever the presented value moves: on an assignment outside animate(), and on every animation
+        // step after one inside it. For values read in layout, which otherwise only sees changes it's told about.
+        // It runs while the Animator ticks, so it mustn't start animations.
+        void onChange(std::function<void()> onChange) {
+            onChange_ = std::move(onChange);
+        }
+
         bool tick(float dt) {
+            auto before = presented_;
             bool running = false;
             for (size_t i = 0; i < N; i++) {
                 if (!motions_[i]) continue;
                 if (motions_[i]->step(dt, presented_[i], velocity_[i], model_[i])) running = true;
                 else motions_[i].reset();
             }
+            if (presented_ != before && onChange_) onChange_();
             return running;
         }
 
     private:
         std::array<float, N> model_{}, presented_{}, velocity_{};
         std::array<std::unique_ptr<Motion>, N> motions_;
+        std::function<void()> onChange_;
     };
 }

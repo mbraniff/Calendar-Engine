@@ -80,6 +80,13 @@ struct Color {
     static constexpr Color gray() { return { 0.5f, 0.5f, 0.5f, 1.0f }; }
 };
 
+// How content with its own aspect ratio, like an image, sits in a frame of another shape.
+enum class ContentMode {
+    Fit,      // as large as fits whole inside the frame, keeping its aspect ratio
+    Fill,     // as small as covers the frame, keeping its aspect ratio; the overflow is cropped
+    Stretch,  // exactly the frame, ignoring its aspect ratio
+};
+
 struct Alignment {
     // y-down: top is 0, bottom is 1.
     float x = 0.5f, y = 0.5f;

@@ -1,5 +1,6 @@
 #pragma once
 #include "ui/GL.h"
+#include "ui/rendering/image_renderer.hpp"
 #include "ui/rendering/shape_renderer.hpp"
 #include "ui/rendering/text_renderer.hpp"
 #include "ui/shapes/mask.hpp"
@@ -45,6 +46,22 @@ public:
         shapeRenderer_.draw(fill, { std::round(o.x), std::round(o.y) });
     }
 
+    // Draws uv's part of image over rect, which is in frame space like the rects views lay out.
+    void drawImage(GLuint image, const Rect& rect, const glm::vec4& uv, Color color, float templateMode) {
+        GLuint tex = whiteTex_;
+        glm::vec4 mask(0, 0, width_, height_);
+        if (!getMask(tex, mask)) return;
+        imageRenderer_.setMask(mask, tex);
+
+        float opacity = 1.0f;
+        for (float o : opacity_) opacity *= o;
+        imageRenderer_.setOpacity(opacity);
+        // No rounding, unlike shapes: the image is filtered, so a fractional offset moves it smoothly.
+        Point o = offset();
+        Rect screen = { { rect.origin.x + o.x, rect.origin.y + o.y }, rect.width, rect.height };
+        imageRenderer_.draw(image, screen, uv, color, templateMode);
+    }
+
     void pushClip(const Path& path, Mask& mask) {
         const Mask* parent = masks_.empty() ? nullptr : masks_.back().first;
         mask.update(path, parent);
@@ -76,6 +93,7 @@ public:
         width_ = w; height_ = h;
         textRenderer_.setFrameBuffer(w, h);
         shapeRenderer_.setFrameBuffer(w, h);
+        imageRenderer_.setFrameBuffer(w, h);
     }
 
     bool isClippedOut(const Rect& r) const {
@@ -98,6 +116,7 @@ private:
     GLuint whiteTex_ = 0;
     TextRenderer textRenderer_;
     ShapeRenderer shapeRenderer_;
+    ImageRenderer imageRenderer_;
     float width_ = 0, height_ = 0;
 
     bool getMask(GLuint& tex, glm::vec4& rect) const {

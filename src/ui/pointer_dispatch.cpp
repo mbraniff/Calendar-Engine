@@ -12,7 +12,7 @@ void PointerDispatch::pointerDown(int channel, Point p, double time) {
         recognizers_.clear();
         startChannel = channel;
         hitView_ = root_->hitTest(p);
-        for(auto v = hitView_; v; v = v->parent().lock()) {
+        for(auto v = hitView_.get(); v; v = v->parent()) {
             for(auto& r : v->gestureRecognizers()) {
                 recognizers_.push_back(r);
             }

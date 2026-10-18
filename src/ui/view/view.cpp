@@ -26,10 +26,10 @@ const std::vector<std::shared_ptr<GestureRecognizer>> View::gestureRecognizers()
     return gestureRecognizers_;
 }
 
-std::weak_ptr<View> View::parent() { return parent_; }
+View* View::parent() { return parent_; }
 
 Point View::fromScreen(Point p) {
-    for (auto v = shared_from_this(); v; v = v->parent_.lock())
+    for (auto v = this; v; v = v->parent_)
         p = p - v->offset;
     return p;
 }

@@ -96,7 +96,7 @@ public:
     Point anchor() const { return anchor_; }
 
     virtual void addSubview(std::shared_ptr<View> view) {
-        view->parent_ = std::weak_ptr<View>(weak_from_this());
+        view->parent_ = this;
         subviews_.push_back(std::move(view));
         setNeedsLayout();
     }
@@ -108,24 +108,23 @@ public:
     std::shared_ptr<View> frame(FrameOptions options);
     virtual std::shared_ptr<View> hitTest(Point p);
     const std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers();
-    std::weak_ptr<View> parent();
+    View* parent();
     // Maps a screen point into the space frames are laid out in, by taking off our offset and our ancestors'.
     Point fromScreen(Point p);
     void addGesture(std::shared_ptr<GestureRecognizer> recognizer) {
         gestureRecognizers_.push_back(recognizer);
     }
 
-    virtual void pointerDown(int c, Point p, double t)  { if (auto v = parent_.lock()) v->pointerDown(c, p, t); }
-    virtual void pointerMoved(int c, Point p, double t) { if (auto v = parent_.lock()) v->pointerMoved(c, p, t); }
-    virtual void pointerUp(int c, Point p, double t)    { if (auto v = parent_.lock()) v->pointerUp(c, p, t); }
-    virtual void pointerCancelled()                     { if (auto v = parent_.lock()) v->pointerCancelled(); }
+    virtual void pointerDown(int c, Point p, double t)  { if (parent_) parent_->pointerDown(c, p, t); }
+    virtual void pointerMoved(int c, Point p, double t) { if (parent_) parent_->pointerMoved(c, p, t); }
+    virtual void pointerUp(int c, Point p, double t)    { if (parent_) parent_->pointerUp(c, p, t); }
+    virtual void pointerCancelled()                     { if (parent_) parent_->pointerCancelled(); }
 
     void setNeedsLayout() {
         needsLayout_ = true;
         if (background) background->setNeedsLayout();
         if (overlay) overlay->setNeedsLayout();
-        auto p = parent_.lock();
-        if (p) p->setNeedsLayout();
+        if (parent_) parent_->setNeedsLayout();
     }
 protected:
     virtual Size measure(std::optional<float> w, std::optional<float> h) {
@@ -162,7 +161,7 @@ protected:
     Mask clipMask_;
     Mask borderMask_;
     Padding padding_ = Padding(0);
-    std::weak_ptr<View> parent_;
+    View* parent_ = nullptr;
     Point anchor_;
     std::vector<std::shared_ptr<GestureRecognizer>> gestureRecognizers_;
     bool needsLayout_ = true;

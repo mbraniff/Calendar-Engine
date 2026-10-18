@@ -56,6 +56,8 @@ add_library(ui STATIC
     src/ui/containers/vstack.cpp
     src/ui/gestures/drag_gesture.cpp
     src/ui/gestures/tap_gesture.cpp
+    src/ui/image/image_view.cpp
+    src/ui/image/stb_image.cpp
     src/ui/shapes/mask.cpp
     src/ui/shapes/path.cpp
     src/ui/shapes/shape_view.cpp
@@ -83,7 +85,6 @@ add_executable(calendar
     src/calendar/playground_view_controller.cpp
     src/calendar/views/calendar_view.cpp
     src/calendar/views/calendar_cell_view.cpp
-    src/calendar/stb_image.cpp
     src/platform/platform_glfw.cpp
 )
 target_link_libraries(calendar PRIVATE ui glfw)

@@ -1,16 +1,15 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include "calendar/playground_view_controller.hpp"
 #include "ui/GL.h"
 #include <GLFW/glfw3.h>
 #include <memory>
-#include <string>
 #include "calendar/views/fps_view.hpp"
 #include "ui/animation/animator.hpp"
 #include "ui/graphics.hpp"
 #include "ui/pointer_dispatch.hpp"
 #include "ui/rendering/renderer.hpp"
-#include "stb_image.h"
 #include "platform/platform.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -75,7 +74,8 @@ int main() {
             processPointer(dispatch, e);
         };
 
-        ContentViewViewController content;
+        // ContentViewViewController content;
+        PlaygroundViewController content;
         mainView->addSubview(content.view());
         mainView->addSubview(std::make_shared<FPSView>());
 
