@@ -2,6 +2,9 @@
 #include "ui/graphics.hpp"
 #include "ui/shapes/path.hpp"
 #include <algorithm>
+#include <memory>
+
+class View;
 
 // Distance from a quarter circle's end point to its cubic control point, per unit of radius.
 inline constexpr float kCircleKappa = 0.5522847498f;
@@ -9,9 +12,16 @@ inline constexpr float kCircleKappa = 0.5522847498f;
 struct Shape {
     virtual ~Shape() = default;
     virtual Path pathIn(Rect rect) const = 0;
+    virtual std::unique_ptr<Shape> clone() const = 0;
+
+    // A view of this shape filled with color, e.g. background = Rectangle().fill(Colors::cell).
+    std::shared_ptr<View> fill(Color color) const;
+    // A view of this shape's outline, width wide and inside its frame.
+    std::shared_ptr<View> stroke(Color color, float width) const;
 };
 
 struct Rectangle : public Shape {
+    std::unique_ptr<Shape> clone() const override { return std::make_unique<Rectangle>(*this); }
     Path pathIn(Rect rect) const override {
         Path result;
         result.moveTo({ rect.origin.x, rect.origin.y });
@@ -24,6 +34,7 @@ struct Rectangle : public Shape {
 };
 
 struct Circle : public Shape {
+    std::unique_ptr<Shape> clone() const override { return std::make_unique<Circle>(*this); }
     Path pathIn(Rect rect) const override {
         Point c = rect.center();
         float r = std::min(rect.width, rect.height) / 2;
@@ -41,6 +52,7 @@ struct Circle : public Shape {
 };
 
 struct RoundedRectangle : public Shape {
+    std::unique_ptr<Shape> clone() const override { return std::make_unique<RoundedRectangle>(*this); }
     float cornerRadius;
 
     explicit RoundedRectangle(float cornerRadius) : cornerRadius(cornerRadius) {}
@@ -67,6 +79,7 @@ struct RoundedRectangle : public Shape {
 };
 
 struct Capsule : public Shape {
+    std::unique_ptr<Shape> clone() const override { return std::make_unique<Capsule>(*this); }
     Path pathIn(Rect rect) const override {
         return RoundedRectangle(std::min(rect.width, rect.height) / 2).pathIn(rect);
     }

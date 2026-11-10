@@ -10,9 +10,9 @@
 #include "ui/gestures/tap_gesture.hpp"
 #include "ui/image/image_view.hpp"
 #include "ui/shapes/shape.hpp"
-#include "ui/shapes/shape_view.hpp"
 #include "ui/view/scroll_view.hpp"
 #include <algorithm>
+#include <memory>
 #include <string>
 
 PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_shared<View>()) {
@@ -24,7 +24,7 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
     bouncer_->color = Color::red();
     bouncer_->fontWeight = Font::Weight::Heavy;
     bouncer_->padding(8);
-    bouncer_->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
+    bouncer_->background = RoundedRectangle(5.0f).fill(Color::blue());
 
     counterView_ = std::make_shared<Text>("0");
     counterView_->alignment = Alignment::bottomTrailing();
@@ -38,7 +38,7 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
     bigTextLabel->color = Color::white();
     bigTextLabel->setTextAlignment(TextAlignment::Right);
     auto bigText = bigTextLabel->frame({.maxWidth=100, .maxHeight=100});
-    bigText->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color::blue());
+    bigText->background = RoundedRectangle(5.0f).fill(Color::blue());
     auto btg = std::make_shared<DragGestureRecognizer>();
     btg->onChange([weak = std::weak_ptr(bigText)](DragGestureRecognizer::DragEvent event) {
         auto view = weak.lock();
@@ -50,7 +50,7 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
 
     auto containerHStack = std::make_shared<HStack>();
     auto scrollView = std::make_shared<ScrollView>();
-    scrollView->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(20.0f), Color::black().withAlpha(0.75f));
+    scrollView->background = RoundedRectangle(20.0f).fill(Color::black().withAlpha(0.75f));
     auto scrollViewFrame = scrollView->frame({ .width = 300, .height = 500 });
     auto vstack = std::make_shared<VStack>();
     auto hstack = std::make_shared<HStack>(0);
@@ -78,7 +78,8 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
     auto scrollVStack = std::make_shared<VStack>();
     scrollView->addSubview(scrollVStack);
 
-    std::shared_ptr<Button> b = std::make_shared<Button>(std::make_shared<Text>("Add To ScrollView"), [weak = std::weak_ptr(scrollVStack)]() {
+    auto firstText = std::make_shared<std::shared_ptr<Text>>();
+    std::shared_ptr<Button> b = std::make_shared<Button>(std::make_shared<Text>("Add To ScrollView"), [firstText, weak = std::weak_ptr(scrollVStack)]() {
         auto view = weak.lock();
         if (!view) return;
         auto text = std::make_shared<Text>("This is some text yippee yippee doo, this is some text, won't you let me coo! I will go dance and eat the breakfast!");
@@ -86,9 +87,10 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
         text->fontWeight = Font::Weight::Heavy;
         text->color = Color::white();
         view->addSubview(text);
+        if (!*firstText) *firstText = text;
     });
     b->padding(8);
-    b->background = std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(5.0f), Color(0.8f, 0.0f, 0.8f));
+    b->background = RoundedRectangle(5.0f).fill(Color(0.8f, 0.0f, 0.8f));
     b->clipShape = std::make_unique<Capsule>();
     b->borderWidth = 2;
     std::shared_ptr<DragGestureRecognizer> dragGesture = std::make_shared<DragGestureRecognizer>();
@@ -119,18 +121,24 @@ PlaygroundViewController::PlaygroundViewController() : ViewController(std::make_
     });
     b->addGesture(dragGesture);
 
+    auto centerButton = std::make_shared<Button>(std::make_shared<Text>("Center"), [firstText, scrollView]{
+        if (!*firstText) return;
+        scrollView->scrollTo(*firstText);
+    });
+
     vstack->padding(8);
     vstack->addSubview(b);
     vstack->addSubview(bouncer_);
     vstack->addSubview(bigText);
     vstack->addSubview(swapAlignment);
+    vstack->addSubview(centerButton);
 
     containerHStack->addSubview(frame);
     containerHStack->addSubview(scrollViewFrame);
 
     hstack->clipShape = std::make_unique<Rectangle>();
-    hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<Circle>(), Color::blue())->frame({.width = 100}));
-    hstack->addSubview(std::make_shared<ShapeView>(std::make_shared<RoundedRectangle>(25), Color::green())->frame({.width = 200, .height = 200}));
+    hstack->addSubview(Circle().fill(Color::blue())->frame({.width = 100}));
+    hstack->addSubview(RoundedRectangle(25).fill(Color::green())->frame({.width = 200, .height = 200}));
     hstack->padding(8);
     // The same photo fit, filled and stretched into identical bordered boxes, then a tinted icon.
     for (ContentMode mode : { ContentMode::Fit, ContentMode::Fill, ContentMode::Stretch }) {

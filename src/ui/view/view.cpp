@@ -33,3 +33,14 @@ Point View::fromScreen(Point p) {
         p = p - v->offset;
     return p;
 }
+
+bool View::hasSubview(std::shared_ptr<View> view) {
+    return view->hasParent(this);
+}
+
+bool View::hasParent(View* parent) {
+    for (auto current = this->parent(); current != nullptr; current = current->parent()) {
+        if (current == parent) return true;
+    }
+    return false;
+}

@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/graphics.hpp"
 #include "ui/view/view.hpp"
 #include <memory>
 
@@ -10,6 +11,8 @@ public:
     void addSubview(std::shared_ptr<View> view) override;
     void layoutSubviews() override;
     void pointerDown(int, Point, double) override;
+    void scrollTo(std::shared_ptr<View> view);
+    void centerAt(Point& p);
 private:
     ScrollAxis axis_;
     std::shared_ptr<View> container_;

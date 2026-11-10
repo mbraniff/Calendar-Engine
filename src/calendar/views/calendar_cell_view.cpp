@@ -1,6 +1,7 @@
 #include "calendar/views/calendar_cell_view.hpp"
+#include "calendar/colors.hpp"
 #include "ui/graphics.hpp"
-#include "ui/shapes/shape_view.hpp"
+#include "ui/shapes/shape.hpp"
 #include "ui/text/text.hpp"
 #include <memory>
 #include <string>
@@ -10,19 +11,20 @@ CalendarCellView::CalendarCellView(const std::string& date, bool highlighted) : 
 }
 
 void CalendarCellView::setup() {
-    borderColor = Color::gray();
+    borderColor = Colors::grid;
     borderWidth = 1;
+    background = Rectangle().fill(weekend ? Colors::weekendCell : Colors::cell);
     if (!date_.lock()) {
-        auto v = std::make_shared<Text>(date);
-        date_ = std::weak_ptr(v);
+        auto v = add<Text>(date);
         v->padding(8.0f);
+        v->color = Colors::text;
         v->alignment = Alignment::topTrailing();
-        addSubview(v);
+        date_ = std::weak_ptr(v);
     }
     auto v = date_.lock();
     v->text = date;
     if (highlighted) {
-        v->background = std::make_shared<ShapeView>(std::make_shared<Circle>(), Color::red().withAlpha(0.7));
+        v->background = Circle().fill(Colors::accent);
         v->background->padding(4.0f);
     } else {
         v->background.reset();

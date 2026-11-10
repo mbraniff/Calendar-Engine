@@ -1,11 +1,13 @@
 #pragma once
 #include "ui/text/text.hpp"
 #include "ui/view/view.hpp"
+#include <functional>
 #include <memory>
 
 class CalendarCellView : public View {
 public:
     bool highlighted = false;
+    bool weekend = false;
     std::string date = "";
 
     CalendarCellView(const std::string& date = "", bool highlighted = false);

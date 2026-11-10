@@ -1,8 +1,10 @@
 #pragma once
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <optional>
+#include <string_view>
 
 inline constexpr float infinity = std::numeric_limits<float>::infinity();
 
@@ -53,13 +55,13 @@ struct Rect {
     Point origin;
     float width = 0, height = 0;
 
-    Point center() { return { origin.x + width / 2, origin.y + height / 2 }; }
-    bool contains(Point p) {
+    Point center() const { return { origin.x + width / 2, origin.y + height / 2 }; }
+    bool contains(Point p) const {
         return p.x >= origin.x && p.x <= origin.x + width
             && p.y >= origin.y && p.y <= origin.y + height;
     }
 
-    Proposal to_proposal() {
+    Proposal to_proposal() const {
         return { origin, width, height };
     }
 
@@ -70,6 +72,9 @@ struct Rect {
 
 struct Color {
     float r = 0.0f, g = 0.0f, b = 0.0f, a = 1.0f;
+    static constexpr Color hex(uint32_t rgb, float alpha = 1.0f) {
+        return { ((rgb >> 16) & 0xFF) / 255.0f, ((rgb >> 8) & 0xff) / 255.0f, (rgb & 0xff) / 255.0f, alpha };
+    }
     const Color withAlpha(float alpha) const { return {r, g, b, alpha }; }
     static constexpr Color clear() { return { 0.0f, 0.0f, 0.0f, 0.0f }; }
     static constexpr Color white() { return { 1.0f, 1.0f, 1.0f }; }

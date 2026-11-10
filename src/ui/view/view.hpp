@@ -25,6 +25,8 @@ public:
     // Laid out over our frame like background, but drawn after our subviews.
     std::shared_ptr<View> overlay;
 
+    ~View() { parent_ = nullptr; }
+
     Size sizeThatFits(std::optional<float> w, std::optional<float> h) {
         float padW = padding_.left + padding_.right;
         float padH = padding_.top + padding_.bottom;
@@ -126,6 +128,16 @@ public:
         if (overlay) overlay->setNeedsLayout();
         if (parent_) parent_->setNeedsLayout();
     }
+
+    template <typename T, typename... Args>
+    std::shared_ptr<T> add(Args&&... args) {
+        auto view = std::make_shared<T>(std::forward<Args>(args)...);
+        addSubview(view);
+        return view;
+    }
+
+    bool hasSubview(std::shared_ptr<View> view);
+
 protected:
     virtual Size measure(std::optional<float> w, std::optional<float> h) {
         if (w.has_value() && h.has_value()) return { w.value(), h.value() };
@@ -156,6 +168,8 @@ protected:
             frame_.height - padding_.top - padding_.bottom };
     }
 
+    bool hasParent(View* parent);
+
     Rect frame_;
     std::vector<std::shared_ptr<View>> subviews_;
     Mask clipMask_;
@@ -177,3 +191,8 @@ protected:
 
     friend class ViewController;
 };
+
+template <typename T, typename... Args>
+std::shared_ptr<T> make(Args&&... args) {
+    return std::make_shared<T>(std::forward<Args>(args)...);
+}

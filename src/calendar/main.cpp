@@ -54,10 +54,6 @@ int main() {
     auto platform = createPlatform();
     if (!platform->init(cfg)) return 1;
     {
-        // platform->onKey = [&, program](int key) {
-        //     processInput(key, program.ID);
-        // };
-
         int w, h;
         platform->framebufferSize(w, h);
 
